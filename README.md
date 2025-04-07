@@ -58,10 +58,12 @@ classDiagram
 	Character "1" *-- "0.." Status: has
 	class Character {
 		+String name	 
-		+Double heath
+		+Double health
+		+Double mentalHealth
 		+Double thirst
 		+Double starving
-		-List~Status~ statusEffects
+		-List~Status~ currentStatus
+		-Dictionary~Stat, double~ stats
 		
 		+useItem(Item item) void
 		+getConditionLevel() double
@@ -70,6 +72,23 @@ classDiagram
 
 	class Status {
 		<<enumeration>>
+		Hungry,
+		Starvataion,
+		Thirsty,
+		Dehydration,
+		Sick,
+		Crazy,
+		Fatigued,
+		Hurt,
+		Tired	
+	}
+
+	class StatType {
+		<<enumeration>>
+		MentalToughness,
+		DailyFoodIntake,
+		DailyWaterIntake,
+		DiseaseIncidence,
 	}
 
 	class Item {
