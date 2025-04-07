@@ -52,15 +52,14 @@
 
 #### game system diagram
 ```mermaid
-%%{ init: { 'theme': 'dark' } }%%
 classDiagram
 
-	class Game {
-	
-	}
+  class Game {
+  
+  }
 
-	class Renderer {
-	}
+  class Renderer {
+  }
 	
   class Window {
   }
@@ -69,7 +68,7 @@ classDiagram
 	<<abstract>>
   }
 
-	class IInteractable {
-	<<interface>>
-	}
+  class IInteractable {
+  <<interface>>
+  }
 ```
