@@ -45,20 +45,84 @@
   - [ ] 메인 화면과 별개로 소지 아이템 표시   
   - [ ] 현재 캐릭터와 소지한 아이템에 따른 이벤트 발생   
   - [ ] 캐릭터의 상태에 따른 이벤트 발생   
-
-#### 기능   
-
 ## diagram
+#### game data diagram
+```mermaid
+classDiagram
+	Character "1" --> "1" Item: use
+	Character "x" -- "x" Event
+	Inventory "1" o-- "*" Item: has
+	ConsumableItem ..|> Item
+	ReusableItem ..|> Item
+	Event "1" --> "0..1" Item: required
+	Character "1" *-- "0.." Status: has
+	class Character {
+		+String name	 
+		+Double heath
+		+Double thirst
+		+Double starving
+		-List~Status~ statusEffects
+		
+		+useItem(Item item) void
+		+getConditionLevel() double
+		+goToNextDay() void
+	}
+
+	class Status {
+		<<enumeration>>
+	}
+
+	class Item {
+		<<abstract>>
+		+String name	
+	}
+
+	note for ConsumableItem "식량과 같이 소비되는 아이템"
+	class ConsumableItem {
+		
+	}
+
+	note for ReusableItem "확률적으로 소모될 수 있음"
+	class ReusableItem {
+	}
+
+	note for Inventory "여러 캐릭터가 공용으로 사용"
+	class Inventory {
+		-Dictionary~Item,double~ items
+	}
+
+	class Event {
+		+Nullable~Item~ helpfulItem
+		+impactTo(Character target)	void
+		+impactTo(Character target, Item item) void
+	}
+```
 
 #### game system diagram
 ```mermaid
 classDiagram
-
+	Renderer "1" --> "1..n" Window
+	InputForwarder "x" --> "1" Window 
+	Game "1" *-- "1" GameData
+	Scene "1" --> "1" RenderContent: create
+	Renderer "1" --> "1..n" RenderContent: consume
+	Window ..|> IInteractable
+	ImageScene ..|> Scene
+	SelectScene ..|> Scene
+		
   class Game {
-  
+		+bool isOver
+		+Int daysLeft
   }
+	
+	note for GameData "위의 모든 게임 데이터"
+	class GameData {
+		List~Character~ characters
+		Inventory inventory
+	}
 
   class Renderer {
+		List~Window~ windows
   }
 	
   class Window {
@@ -66,9 +130,23 @@ classDiagram
 
   class Scene {
 	<<abstract>>
+	+GetRenderContent(): RenderContent
   }
+	
+	class InputForwarder {
+		Window focusedWindow
+	}
 
   class IInteractable {
   <<interface>>
   }
+
+	class RenderContent {
+	}
+
+	class ImageScene {
+	}
+
+	class SelectScene {
+	}
 ```
