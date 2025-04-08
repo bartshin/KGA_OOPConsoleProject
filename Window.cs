@@ -1,14 +1,17 @@
+using System.Collections;
+
 namespace ConsoleProject;
 
 class Window: IInteractable {
 
-  private Dictionary<string, Func<Scene>> sceneConstructors = new() ;
   public event EventHandler OnContentRefreshed;
   public bool IsInputDisplayed { get; protected set; } = true;
+  public event EventHandler<WindowMessage<object>> OnSendMessage;
   public IInteractable.InputType AcceptType { get; protected set; }
   public IEnumerable<InputKey> AcceptKeys { 
     get; protected set; 
   }
+  public Func<Scene> GoToNextScene;
   public WindowType Type { get; init; }
   private Scene currentScene;
   public Scene CurrentScene { 
@@ -20,10 +23,6 @@ class Window: IInteractable {
 
   public void OnRenderStarted(Renderer renderer) {
     renderer.OnRenderFinished += this.OnRenderFinished;
-  }
-
-  public void AddScene(string name, Func<Scene> constructor) {
-    this.sceneConstructors.Add(name, constructor);
   }
 
   public void OnRenderFinished(object? sender, EventArgs args) {
@@ -50,17 +49,42 @@ class Window: IInteractable {
     switch (command) {
       case WindowCommand.NextScene:
         if (obj is string nextSceneName) {
-          Console.Clear();
-          if (this.sceneConstructors.ContainsKey(nextSceneName)) {
-            Scene nextScene = this.sceneConstructors[nextSceneName]();
-            this.CurrentScene = nextScene;
-            this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
-          }
+          Scene nextScene = this.GoToNextScene();
+          this.CurrentScene = nextScene;
         }
         break;
-        default:
+      case WindowCommand.SendMessage:
+        if (this.OnSendMessage == null) {
+          Console.Error.WriteLine($"OnSendMessage is null: {this}");
+          break;
+        }
+        if (SelectScene<object>.IsSelectScene(this.CurrentScene) && obj != null)
+          this.SendSelection(obj);
+        else {
+          throw new NotImplementedException();
+        }
+          break;
+      default:
           break;
     }
+    // TODO: Check refresh is needed
+    this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
+  }
+
+  public void SendSelection(object selection) {
+    var type = selection.GetType();
+    if (!type.IsGenericType || 
+        type.GetGenericTypeDefinition() != typeof(List<>)) {
+      throw (new ApplicationException($"selection is not list: {selection}"));
+    }
+    if(selection is ICollection list) {
+      var message = new WindowMessage<ICollection> {
+        Type = WindowMessage<ICollection>.MessageType.Selection,
+        Value = list
+      };
+    }
+    else
+      Console.Error.WriteLine($"selection is not list: {selection}");
   }
 
   public RenderContent GetRenderContent() 
@@ -74,7 +98,20 @@ class Window: IInteractable {
   public enum WindowCommand {
     None,
     NextScene,
+    RefreshWindow,
+    SendMessage,
     CloseWindow,
+  }
+
+  public class WindowMessage<T>: EventArgs {
+
+    public required MessageType Type { get; init; }
+    public required T Value { get; init; }
+
+    public enum MessageType {
+      Selection,
+      Input,
+    }
   }
 }
 

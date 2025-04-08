@@ -2,27 +2,32 @@ namespace ConsoleProject;
 
 sealed class SelectScene<T>: Scene {
 
+  public static bool IsSelectScene(Scene scene) {
+    var type = scene.GetType();
+    return  (type.IsGenericType && 
+        type.GetGenericTypeDefinition() == typeof (SelectScene<>));
+  }
+
   private string prompt;
   public Dictionary<InputKey, T> Selections { get; } 
-  public List<InputKey> Selected { get; } = new();
+  public List<T> Selected { get; } = new();
   public int MaximumSelect { get; } 
 
-  public SelectScene(Dictionary<string, object> param)
-    : base((string)param["name"], SceneState.Rendering) {
+  public SelectScene(ISceneName name, Dictionary<string, object> param)
+    : base(name, SceneState.Rendering) {
     if (param["prompt"] is string prompt)
       this.prompt = prompt;
     else
       throw (new ArgumentException());
-
-    if (param["selections"] is (InputKey, T)[] selections) {
+    if (param["selections"] is List<(InputKey, object)> selections) {
       this.Selections = new();
       foreach (var (input, value) in selections) {
-        this.Selections[input] = value;
+        this.Selections[input] = (T)value;
         this.AcceptKeys.Add(input);
       }
     }
     else 
-      throw (new ArgumentException());
+      throw (new ArgumentException("here"));
 
     if (param.ContainsKey("maximumSelect") && 
         param["maximumSelect"] is int maximumSelect
@@ -42,29 +47,24 @@ sealed class SelectScene<T>: Scene {
   }
 
   public override (Window.WindowCommand, object?) ReceiveInput(InputKey input) {
-    if (this.Selected.Contains(input) &&
+    var inputValue = this.Selections[input];
+    if (inputValue == null)
+      return (Window.WindowCommand.None, null);
+    if (this.Selected.Contains(inputValue) &&
       this.MaximumSelect > 1) {
-      this.Selected.Remove(input);
+      this.Selected.Remove(inputValue);
     }
     else
-      this.Selected.Add(input);
+      this.Selected.Add(inputValue);
     if (this.MaximumSelect == 1)
       return (Window.WindowCommand.NextScene, this.NextSceneName);
     else if (this.MaximumSelect > 1 && input == InputKey.Enter)
       return (Window.WindowCommand.NextScene, this.NextSceneName);
-    return (Window.WindowCommand.None, null);
+    return (Window.WindowCommand.SendMessage, this.Selected);
   }
 
   public override void OnRenderFinished() {
     this.State = SceneState.WaitingInput;
-  }
-
-  private string InputKeyToString(InputKey input) {
-    string inputString = input.ToString();
-    if (inputString[0] == 'D') {
-      return (inputString.Remove(0, 1));
-    }
-    return (inputString);
   }
 
   public override RenderContent GetRenderContent() {
@@ -78,10 +78,21 @@ sealed class SelectScene<T>: Scene {
     lists.Add(("", RenderColor.White));
     foreach (var (key, value) in this.Selections) {
        lists.Add((string.Format(
-               $"[{this.InputKeyToString(key)}]: {value}"), RenderColor.Green)); 
+               $"[{this.InputKeyToString(key)}]: {value}"), 
+             this.IsSelected(value) ? RenderColor.Blue: RenderColor.Green)); 
     }
     lists.Add(("", RenderColor.White));
-    return (new RenderContent(lists));
+    return (new RenderContent(lists, RenderContent.AnimationType.None));
   }
+
+  private string InputKeyToString(InputKey input) {
+    string inputString = input.ToString();
+    if (inputString[0] == 'D') {
+      return (inputString.Remove(0, 1));
+    }
+    return (inputString);
+  }
+
+  private bool IsSelected(T value) => this.Selected.IndexOf(value) != -1;
 }
 

@@ -9,15 +9,15 @@ class ImageScene: Scene {
 
   public override RenderContent GetRenderContent() => this.renderContent;
 
-  public ImageScene(Dictionary<string, string> param): this(
-      param["name"],
+  public ImageScene(Scene.ISceneName name, Dictionary<string, string> param): this(
+      name,
       param["image"],
       param.ContainsKey("nextSceneName") ?
       param["nextSceneName"]: null
       ) {}
 
   public ImageScene(
-      string name, 
+      Scene.ISceneName name, 
       string image,
       string? nextSceneName
       ): base(name, SceneState.Rendering) { 
@@ -30,7 +30,7 @@ class ImageScene: Scene {
     contents.Add(("\t\t아무 키나 누르세요", RenderColor.Green));
     contents.Add(("", RenderColor.White));
     contents.Add(("", RenderColor.White));
-    this.renderContent = new RenderContent(contents);
+    this.renderContent = new RenderContent(contents, RenderContent.AnimationType.TopToButtom);
     this.NextSceneName = nextSceneName;
     if (nextSceneName == null)
       throw (new NotImplementedException());

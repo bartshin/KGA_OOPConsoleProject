@@ -122,9 +122,12 @@ classDiagram
 classDiagram
 	Renderer "1" --> "1..n" Window
 	InputForwarder "x" --> "1" Window 
-	Game "1" *-- "1" GameData
-	Scene "1" --> "1" RenderContent: create
-	Renderer "1" --> "1..n" RenderContent: consume
+	Game "x" *-- "1" GameData
+	Scene "x" --> "1" RenderContent: create
+	Scene "1" *-- "1" SceneNode: identify
+	SceneProgressor "x" --> "*" SceneNode: has
+	Game "1" --> "1" SceneProgressor: control
+	Renderer "x" --> "1..n" RenderContent: consume
 	Window ..|> IInteractable
 	ImageScene ..|> Scene
 	SelectScene ..|> Scene
@@ -151,6 +154,10 @@ classDiagram
 	<<abstract>>
 	+GetRenderContent(): RenderContent
   }
+
+	class SceneProgressor {
+		Tree~SceneNode~ scenes	
+	}
 	
 	class InputForwarder {
 		Window focusedWindow
