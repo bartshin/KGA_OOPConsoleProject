@@ -26,11 +26,27 @@ class Game {
   public Scene GoToNextScene(Window window) {
     switch (window.Type) {
       case Window.WindowType.Main:
+        if (window.CurrentScene is ISelectScene selectScene) 
+          this.GetSelection(selectScene);
         var nextScene = this.SelectSceneFrom(this.Scenes.GetNextScenes());
         if (SelectScene<object>.IsSelectScene(nextScene))
           this.SetBottomWindow(nextScene);
         this.Scenes.ProgressToNextScene(nextScene);
         return (nextScene);
+      default: throw new NotImplementedException();
+    }
+  }
+
+  private void GetSelection(ISelectScene selectScene) {
+    var selection = selectScene.CurrentSelection;
+    Scene scene = (Scene)selectScene;
+    switch (scene.SceneName) {
+      case { Name: SceneFactory.SelectSN.SelectCharacterScene }:
+        foreach (string name in selection) {
+          var character = CharacterFactory.CharacterName.GetPlayable(name);
+          this.PickCharacters(CharacterFactory.Shared.Create(character));
+        }
+        break;
       default: throw new NotImplementedException();
     }
   }
@@ -48,8 +64,8 @@ class Game {
 
   private void SetBottomWindow(Scene mainScene) {
     if (SelectScene<object>.IsSelectScene(mainScene)) {
-      if (this.BottomWindow == null) {
         var selectScene = (ISelectScene)mainScene;
+      if (this.BottomWindow == null) {
         InputScene scene = (InputScene)SceneFactory.Shared.Build(
             SceneFactory.AssistanceSN.InputSceneName
             );
@@ -58,6 +74,11 @@ class Game {
         var window = new Window(scene, Window.WindowType.Bottom);
         this.MainWindow.OnSendMessage += window.OnReceieveMessage;
         this.BottomWindow = window;
+      }
+      else if (this.BottomWindow.CurrentScene is InputScene inputScene) {
+        inputScene.AllSelection = selectScene.AllSelections;
+        inputScene.MaxSelection = selectScene.MaxSelection;
+        this.BottomWindow.Refresh();
       }
       else {
         throw new NotImplementedException();
@@ -84,7 +105,7 @@ class Game {
     public GameConfig() {}
   }
 
-  public void PickCharacters(params Character[] characters) {
+  private void PickCharacters(params Character[] characters) {
     foreach (Character character in characters) {
        this.data.AddCharacter(character); 
     }

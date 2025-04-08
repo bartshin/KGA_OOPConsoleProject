@@ -16,6 +16,7 @@ sealed class SceneProgressor {
       throw (new ApplicationException($"${next.SceneName} is not child of current scene"));
     }
     this.currentNode = node;
+    this.OnEnterScene();
   }
 
   public void ReLocateToScene(Scene scene) {
@@ -38,12 +39,50 @@ sealed class SceneProgressor {
   }
 
   public void OnEnterScene() {
+    var nextScene = this.CurrentScene.NextSceneName == null ?
+      this.CreateNextScene(this.CurrentScene.SceneName):
+      this.CreateNextScene();
+    this.AddNextScene(nextScene);
+  }
+
+  private Scene CreateNextScene() {
     var fullName = this.CurrentScene.NextSceneName.Split(':');
     var sceneType = Type.GetType(fullName[0].Trim()); 
     Scene.ISceneName sceneName = (Scene.ISceneName)Activator.CreateInstance(sceneType);
     sceneName.Name = fullName[1].Trim(); 
-    var nextScene = SceneFactory.Shared.Build(sceneName);
-    this.AddNextScene(nextScene);
+    return (SceneFactory.Shared.Build(sceneName));
+  }
+
+  private Scene CreateNextScene(Scene.ISceneName current) {
+    switch (current) {
+      case SceneFactory.ImageSN imageScene when imageScene.Name == SceneFactory.ImageSN.TitleScene:
+        return (SceneFactory.Shared.Build(
+              SceneFactory.ImageSN.CharacterIntro,
+              new Dictionary<string, object>() {
+              { "characterName", CharacterFactory.CharacterName.Ted }
+              }));
+      case SceneFactory.ImageSN imageScene when imageScene.Name == SceneFactory.ImageSN.CharacterIntroScene  :
+        ImageScene currentScene = (ImageScene)this.CurrentScene;
+        string characterName = currentScene.Data["characterName"];
+        var character = CharacterFactory.CharacterName.GetPlayable(characterName);
+        var nextCharacter = Character.GetNext(character);
+        if (nextCharacter != null) {
+          return (SceneFactory.Shared.Build(
+                SceneFactory.ImageSN.CharacterIntro,
+                new Dictionary<string, object>() {
+              { "characterName", CharacterFactory.CharacterName.Get(nextCharacter.Value) }
+                }
+                ));
+        }
+        else {
+          return (SceneFactory.Shared.Build(
+                SceneFactory.SelectSN.SelectCharacter
+                ));
+        }
+        throw new NotImplementedException();
+      default: 
+        throw new NotImplementedException();
+    }
   }
 }
 

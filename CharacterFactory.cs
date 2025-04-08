@@ -15,7 +15,6 @@ sealed class CharacterFactory {
 
   public Character Create(Character.Playable character) {
 
-
     return (new Character(
         character,
         CharacterName.Get(character),
@@ -60,6 +59,14 @@ sealed class CharacterFactory {
           (Character.Stat.DiseaseIncidence, 7.2)
         };
         break;
+      case Character.Playable.Pancake: 
+        stats = new() {
+          (Character.Stat.MentalToughness, 6.0),
+          (Character.Stat.DailyFoodIntake, 0.8),
+          (Character.Stat.DailyWaterIntake, 0.9),
+          (Character.Stat.DiseaseIncidence, 8.2)
+        };
+        break;
       default: 
         throw (new ApplicationException($"{character} has no stat"));
     }
@@ -78,6 +85,27 @@ sealed class CharacterFactory {
     public const string Timmy = "Timmy";
     public const string Pancake = "Pancake";
 
+    public static List<string> AllNames = new List<Character.Playable>(
+        Character.AllPlayables).ConvertAll<string>(
+          p => CharacterName.Get(p));
+
+    public static Character.Playable GetPlayable(string name) {
+      switch (name) {
+        case CharacterName.Ted: 
+          return (Character.Playable.Ted);
+        case CharacterName.Dolores: 
+          return (Character.Playable.Dolores);
+        case CharacterName.MaryJane: 
+          return (Character.Playable.MaryJane);
+        case CharacterName.Timmy: 
+          return (Character.Playable.Timmy);
+        case CharacterName.Pancake: 
+          return (Character.Playable.Pancake);
+        default:
+          throw new ArgumentException($"invalid character name: {name}");
+      }
+    }
+
     public static string Get(Character.Playable character) {
       return (character switch {
           Character.Playable.Ted => CharacterName.Ted,
@@ -91,8 +119,8 @@ sealed class CharacterFactory {
 
   readonly public struct CharacterDescription() {
     public const string Ted = "Ted is one of the main family members in 60 Seconds! and 60 Seconds!: Reatomized, he is the husband of Dolores and the father of Mary Jane and Timmy";
-    public const string Dolores = "Dolores is the wife of Ted and mother of Mary Jane and Timmy. She is the 2nd best in expeditions as she will usually obtain many items, but she is most commonly captured by raiders whilst searching for supplies.";
-    public const string MaryJane = "Mary Jane is the daughter of Ted and Dolores and older sister of Timmy. She is overall a liability as she is the least resistant to insanity, she takes up three slots during scavenging." ;
+    public const string Dolores = "Dolores is the wife of Ted and mother of Mary Jane and Timmy. She is the 2nd best in expeditions as she will usually obtain many items,\n but she is most commonly captured by raiders whilst searching for supplies.";
+    public const string MaryJane = "Mary Jane is the daughter of Ted and Dolores and older sister of Timmy. She is overall a liability as she is the least resistant to insanity,\n she takes up three slots during scavenging." ;
     public const string Timmy = "Timmy is the youngest child of Ted and Dolores and younger brother of Mary Jane. Timmy is the best at scavenging and takes the least amount of time to come home from the wastelands";
     public const string Pancake = "Pancake is a stray dog that comes to the shelter. After a series of events involving the dog, (if done correctly), he will join the family. He, unlike anyone else, will never leave, unless a certain event is done in a certain way.";
 

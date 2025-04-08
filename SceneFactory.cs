@@ -12,8 +12,18 @@ sealed class SceneFactory {
   }
   private SceneFactory() { }
 
+  private static SceneType GetSceneType(Scene.ISceneName sceneName) {
+    return (sceneName switch {
+        ImageSN _ => SceneType.Image,
+        SelectSN _ => SceneType.Select,
+        AssistanceSN scene when scene.Name == AssistanceSN.InputScene => SceneType.Input,
+        _ => throw new ArgumentException($"no scene type found for: {sceneName}")
+        });
+
+  }
+
   public Scene Build(Scene.ISceneName sceneName) {
-    var sceneType = this.GetSceneType(sceneName);
+    var sceneType = SceneFactory.GetSceneType(sceneName);
     switch (sceneType) {
       case SceneType.Select:
         return (this.CreateSelectScene(sceneName));
@@ -26,21 +36,41 @@ sealed class SceneFactory {
     }
   } 
 
-  private SceneType GetSceneType(Scene.ISceneName sceneName) {
-    return (sceneName switch {
-        ImageSN _ => SceneType.Image,
-        SelectSN _ => SceneType.Select,
-        AssistanceSN scene when scene.Name == AssistanceSN.InputScene => SceneType.Input,
-        _ => throw new ArgumentException($"no scene type found for: {sceneName}")
-        });
-
-  }
+  public Scene Build(Scene.ISceneName sceneName, Dictionary<string, object> data) {
+    var sceneType = SceneFactory.GetSceneType(sceneName);
+    switch (sceneType) {
+      case SceneType.Select:
+        return (this.CreateSelectScene(sceneName));
+      case SceneType.Image:
+        return (this.CreateImageScene(sceneName, data));
+      case SceneType.Input:
+        return (this.CreateInputScene(sceneName));
+      default: 
+        throw (new NotImplementedException());
+    }
+  } 
 
   private Scene CreateSelectScene(Scene.ISceneName scene) {
 
     switch (scene) {
+      case { Name: SelectSN.SelectCharacterScene }:
+                   var characterSelection = GetSelections(scene);
+                   return (new SelectScene<string>(
+                         scene,
+                         new Dictionary<string, object> {
+                         {"prompt", 
+                         """
+                         핵전쟁이 일어났습니다!!!
+                         모두를 데려갈 수는 없습니다 테드
+                         당신은 함께 대피할 가족을 선택해야 합니다
+                         """},
+                         {"maximumSelect", 2 },
+                         {"selections",characterSelection },
+                         {"nextSceneName", GetFullName(SceneFactory.SelectSN.SelectItem)}
+                         })
+                       );
       case { Name: SelectSN.SelectItemScene }:
-                   var selections = GetSelections(scene);
+                   var itemSelection = GetSelections(scene);
                    return (new SelectScene<string>(
                          scene,
                          new Dictionary<string, object> {
@@ -50,8 +80,8 @@ sealed class SceneFactory {
                          꼭 필요한 아이템을 고르세요
                          """},
                          {"maximumSelect", 3},
-                         {"selections", selections},
-                         {"nextSceneName", ""}
+                         {"selections",itemSelection },
+                         //{"nextSceneName", ""}
                          })
                        );
       default: 
@@ -62,6 +92,13 @@ sealed class SceneFactory {
   private List<(InputKey, object)> GetSelections(Scene.ISceneName scene) {
 
     switch (scene.Name) {
+      case SelectSN.SelectCharacterScene:
+        return (new List<(InputKey, object)> {
+            (InputKey.D1, CharacterFactory.CharacterName.Get(Character.Playable.Dolores)),
+            (InputKey.D2, CharacterFactory.CharacterName.Get(Character.Playable.MaryJane)),
+            (InputKey.D3, CharacterFactory.CharacterName.Get(Character.Playable.Timmy)),
+            (InputKey.D4, CharacterFactory.CharacterName.Get(Character.Playable.Pancake)),
+            });
       case SelectSN.SelectItemScene:
         return (new List<(InputKey, object)> {
             (InputKey.D1, "방독면"),
@@ -84,10 +121,33 @@ sealed class SceneFactory {
                          new Dictionary<string, string> {
                          { "name", imageScene.Name },
                          { "image", Assets.TitleImage },
-                         { "nextSceneName", Scene.GetFullSceneName(SelectSN.SelectItem)}
+                         { "textBelow", "아무키나 눌러주세요" },
                          }));
+
       default: 
                    throw (new ArgumentException($"invalid ImageSN: {imageScene}"));
+    }
+  }
+
+  private ImageScene CreateImageScene(Scene.ISceneName imageScene, Dictionary<string, object> data) {
+    switch (imageScene) {
+      case { Name: ImageSN.CharacterIntroScene }:
+        string characterName = (string)data["characterName"]; 
+        Character.Playable character = CharacterFactory.CharacterName.GetPlayable(characterName);
+        string image = Assets.CharacterImages[characterName];
+        return (new ImageScene(
+              imageScene,
+              new Dictionary<string, string> {
+              { "name", imageScene.Name },
+              { "characterName", characterName },
+              { "image", image },
+              { "textAbove", string.Format($"캐릭터 소개\n\t이름: {characterName}")},
+              { "textBelow", 
+              CharacterFactory.CharacterDescription.Get(character) + "\n계속하려면 아무키나 누르세요"}
+              })
+            );
+      default:
+        throw (new ArgumentException($"invalid ImageSN: {imageScene}"));
     }
   }
 
@@ -95,11 +155,17 @@ sealed class SceneFactory {
     return (new InputScene(inputScene));
   }
 
+  private string GetFullName(Scene.ISceneName sceneName) {
+    return (sceneName.GetType().FullName + ":" + sceneName.Name);
+  }
+
   public struct ImageSN: Scene.ISceneName {
     public string Name { get; set; }
 
     public const string TitleScene = "Title Scene"; 
     public static readonly ImageSN Title = new () { Name = ImageSN.TitleScene};
+    public const string CharacterIntroScene = "Character Intro Scene";
+    public static readonly ImageSN CharacterIntro = new () { Name = ImageSN.CharacterIntroScene};
   }
 
   public struct SelectSN: Scene.ISceneName {

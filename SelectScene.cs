@@ -5,6 +5,7 @@ namespace ConsoleProject;
 interface ISelectScene {
   public ICollection<(InputKey, object)> AllSelections { get; }
   public int MaxSelection { get; }
+  public ICollection<object> CurrentSelection { get; }
 }
 
 sealed class SelectScene<T>: Scene, ISelectScene {
@@ -28,6 +29,8 @@ sealed class SelectScene<T>: Scene, ISelectScene {
     return (list);
   }}
   public int MaxSelection => this.MaximumSelect;
+
+  public ICollection<object> CurrentSelection => this.Selected.ConvertAll<object>(e => (object)e);
 
   public SelectScene(ISceneName name, Dictionary<string, object> param)
     : base(name, SceneState.Rendering) {
@@ -89,10 +92,11 @@ sealed class SelectScene<T>: Scene, ISelectScene {
     List<(string, RenderColor)> lists = new();
     lists.Add(("", RenderColor.White));
     foreach (var line in prompts) {
-      lists.Add(("\t" + line, RenderColor.White)); 
+      lists.Add(("\t" + line, RenderColor.Gray)); 
     }
-    string maximum = this.MaximumSelect.ToString() + (this.MaximumSelect > 1 ? "개까지": "개만");
-    lists.Add(("\t" + maximum + " 고를 수 있습니다.", RenderColor.Red));
+    lists.Add(("", RenderColor.White));
+    string maximum = this.MaximumSelect.ToString() + (this.MaximumSelect > 1 ? " 항목까지": " 항목만");
+    lists.Add(("\t\t\t" + maximum + " 고를 수 있습니다.", RenderColor.Red));
     lists.Add(("", RenderColor.White));
     foreach (var (key, value) in this.Selections) {
        lists.Add((string.Format(

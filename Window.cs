@@ -71,16 +71,18 @@ class Window: IInteractable {
     this.HandleCommand(command, obj); 
   }
 
+  public void Refresh() {
+    this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
+  }
+
   public RenderContent GetRenderContent() 
     => this.CurrentScene.GetRenderContent();
 
   private void HandleCommand(WindowCommand command, object? obj) {
     switch (command) {
       case WindowCommand.NextScene:
-        if (obj is string nextSceneName) {
-          Scene nextScene = this.GoToNextScene();
-          this.CurrentScene = nextScene;
-        }
+        Scene nextScene = this.GoToNextScene();
+        this.CurrentScene = nextScene;
         break;
       case WindowCommand.SendMessage:
         if (this.OnSendMessage == null) {
@@ -100,7 +102,6 @@ class Window: IInteractable {
         return ;
     }
     // TODO: Check refresh is needed
-    
     this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
   }
 

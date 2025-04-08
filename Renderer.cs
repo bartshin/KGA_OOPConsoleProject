@@ -1,7 +1,7 @@
 namespace ConsoleProject;
 
 class Renderer {
-  const int FrameTime = 50;
+  const int FrameTime = 20;
   public int MainWindowHeight = 30;
 
   private static Renderer instance;

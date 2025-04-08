@@ -64,4 +64,13 @@ sealed class Character {
     Timmy,
     Pancake,
   }
+
+  public static Playable[] AllPlayables = Enum.GetValues<Character.Playable>();
+
+  public static Character.Playable? GetNext(Character.Playable character) {
+    var index = Array.IndexOf(Character.AllPlayables, character);
+    if (index == Character.AllPlayables.Length - 1)
+      return (null);
+    return (Character.AllPlayables[index + 1]);
+  }
 }
