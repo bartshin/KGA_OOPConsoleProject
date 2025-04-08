@@ -2,6 +2,7 @@ namespace ConsoleProject;
 
 class Renderer {
   const int FrameTime = 50;
+  public int MainWindowHeight = 30;
 
   private static Renderer instance;
   public static Renderer Shared {
@@ -43,15 +44,18 @@ class Renderer {
   } 
   
   public void PreceedRender() { 
+    Console.Clear();
     var main = this.Windows.Find(window => window.Type == Window.WindowType.Main);
 
     var bottom = this.Windows.Find(window => window.Type == Window.WindowType.Bottom);
     if (main != null && this.currentContents.TryGetValue(
           main, out RenderContent mainContent)) {
+      Console.SetCursorPosition(0, 0);
       this.PreceedRenderOf(mainContent);
     }
     if (bottom != null && this.currentContents.TryGetValue(
           bottom , out RenderContent bottomContent)) {
+      Console.SetCursorPosition(0, this.MainWindowHeight);
       this.PreceedRenderOf(bottomContent);
     }
   }
@@ -77,6 +81,7 @@ class Renderer {
 
   public void RenderTopToBottom(RenderContent content) {
     while (!content.IsEnd) {
+      Console.SetCursorPosition(0, 0);
       Thread.Sleep(Renderer.FrameTime);
       this.RenderToCurrentIndex(content);
       content.CurrentIndex += 1;
@@ -84,7 +89,6 @@ class Renderer {
   }
 
   private void RenderToCurrentIndex(RenderContent render) {
-    Console.Clear();
     var currentColor = this.foregroundColor;
     for (int i = 0; i < render.CurrentIndex; ++i) {
       var (content, color) = render.Contents[i];

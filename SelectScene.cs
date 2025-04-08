@@ -1,6 +1,13 @@
+using System.Collections;
+
 namespace ConsoleProject;
 
-sealed class SelectScene<T>: Scene {
+interface ISelectScene {
+  public ICollection<(InputKey, object)> AllSelections { get; }
+  public int MaxSelection { get; }
+}
+
+sealed class SelectScene<T>: Scene, ISelectScene {
 
   public static bool IsSelectScene(Scene scene) {
     var type = scene.GetType();
@@ -11,7 +18,16 @@ sealed class SelectScene<T>: Scene {
   private string prompt;
   public Dictionary<InputKey, T> Selections { get; } 
   public List<T> Selected { get; } = new();
-  public int MaximumSelect { get; } 
+  public int MaximumSelect { get; }
+
+  public ICollection<(InputKey, object)> AllSelections { get {
+    List<(InputKey, object)> list = new();
+    foreach (var (key, value) in this.Selections) {
+      list.Add((key, (object)value!)); 
+    }
+    return (list);
+  }}
+  public int MaxSelection => this.MaximumSelect;
 
   public SelectScene(ISceneName name, Dictionary<string, object> param)
     : base(name, SceneState.Rendering) {
@@ -27,7 +43,7 @@ sealed class SelectScene<T>: Scene {
       }
     }
     else 
-      throw (new ArgumentException("here"));
+      throw (new ArgumentException("fail to init selections"));
 
     if (param.ContainsKey("maximumSelect") && 
         param["maximumSelect"] is int maximumSelect
@@ -47,6 +63,8 @@ sealed class SelectScene<T>: Scene {
   }
 
   public override (Window.WindowCommand, object?) ReceiveInput(InputKey input) {
+    if (this.MaximumSelect > 1 && input == InputKey.Enter)
+      return (Window.WindowCommand.NextScene, this.NextSceneName);
     var inputValue = this.Selections[input];
     if (inputValue == null)
       return (Window.WindowCommand.None, null);
@@ -54,12 +72,11 @@ sealed class SelectScene<T>: Scene {
       this.MaximumSelect > 1) {
       this.Selected.Remove(inputValue);
     }
-    else
+    else if (this.Selected.Count < this.MaxSelection) {
       this.Selected.Add(inputValue);
+    }
     if (this.MaximumSelect == 1)
-      return (Window.WindowCommand.NextScene, this.NextSceneName);
-    else if (this.MaximumSelect > 1 && input == InputKey.Enter)
-      return (Window.WindowCommand.NextScene, this.NextSceneName);
+      return (Window.WindowCommand.SendMessage, inputValue);
     return (Window.WindowCommand.SendMessage, this.Selected);
   }
 
@@ -70,15 +87,16 @@ sealed class SelectScene<T>: Scene {
   public override RenderContent GetRenderContent() {
     var prompts = this.prompt.Split('\n');
     List<(string, RenderColor)> lists = new();
+    lists.Add(("", RenderColor.White));
     foreach (var line in prompts) {
-      lists.Add((line, RenderColor.White)); 
+      lists.Add(("\t" + line, RenderColor.White)); 
     }
     string maximum = this.MaximumSelect.ToString() + (this.MaximumSelect > 1 ? "개까지": "개만");
-    lists.Add((maximum + " 고를 수 있습니다.", RenderColor.Red));
+    lists.Add(("\t" + maximum + " 고를 수 있습니다.", RenderColor.Red));
     lists.Add(("", RenderColor.White));
     foreach (var (key, value) in this.Selections) {
        lists.Add((string.Format(
-               $"[{this.InputKeyToString(key)}]: {value}"), 
+               $"\t\t[{this.InputKeyToString(key)}]: {value}"), 
              this.IsSelected(value) ? RenderColor.Blue: RenderColor.Green)); 
     }
     lists.Add(("", RenderColor.White));

@@ -31,7 +31,9 @@ class InputForwarder {
     var input = Console.ReadKey(
         this.FocusedWindow.IsInputDisplayed
         ).Key;
-    this.FocusedWindow.ReceiveInput(input);
+    if (this.FocusedWindow.AcceptType == IInteractable.InputType.AnyKey
+        || this.FocusedWindow.AcceptKeys.Contains(input))
+      this.FocusedWindow.ReceiveInput(input);
   }
 
   public InputForwarder(Window window) {

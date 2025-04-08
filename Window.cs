@@ -6,9 +6,9 @@ class Window: IInteractable {
 
   public event EventHandler OnContentRefreshed;
   public bool IsInputDisplayed { get; protected set; } = true;
-  public event EventHandler<WindowMessage<object>> OnSendMessage;
+  public event EventHandler<WindowMessage> OnSendMessage;
   public IInteractable.InputType AcceptType { get; protected set; }
-  public IEnumerable<InputKey> AcceptKeys { 
+  public IList<InputKey> AcceptKeys { 
     get; protected set; 
   }
   public Func<Scene> GoToNextScene;
@@ -41,11 +41,40 @@ class Window: IInteractable {
     this.CurrentScene = initialScene;
     this.Type = type;
     this.AcceptType = IInteractable.InputType.None;
-    this.AcceptKeys = new List<InputKey>();
+    this.AcceptKeys = initialScene.AcceptKeys;
   }
 
   public void ReceiveInput(InputKey input) {
     var (command, obj) = this.currentScene.ReceiveInput(input); 
+    this.HandleCommand(command, obj);
+  }
+
+  public void SendSelection(object selection) {
+    var type = selection.GetType();
+    if (!type.IsGenericType || 
+        type.GetGenericTypeDefinition() != typeof(List<>)) {
+      throw (new ApplicationException($"selection is not list: {selection}"));
+    }
+    if(selection is ICollection list) {
+      var message = new WindowMessage {
+        Type = WindowMessage.MessageType.Selection,
+        Value = list
+      };
+      this.OnSendMessage?.Invoke(this, message);
+    }
+    else
+      Console.Error.WriteLine($"selection is not list: {selection}");
+  }
+
+  public void OnReceieveMessage(object sender, Window.WindowMessage arg) {
+    var (command, obj) = this.CurrentScene.ReceiveMessage(arg);
+    this.HandleCommand(command, obj); 
+  }
+
+  public RenderContent GetRenderContent() 
+    => this.CurrentScene.GetRenderContent();
+
+  private void HandleCommand(WindowCommand command, object? obj) {
     switch (command) {
       case WindowCommand.NextScene:
         if (obj is string nextSceneName) {
@@ -63,32 +92,17 @@ class Window: IInteractable {
         else {
           throw new NotImplementedException();
         }
-          break;
+        break;
+      case WindowCommand.RefreshWindow:
+        break;
+      case WindowCommand.None:
       default:
-          break;
+        return ;
     }
     // TODO: Check refresh is needed
+    
     this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
   }
-
-  public void SendSelection(object selection) {
-    var type = selection.GetType();
-    if (!type.IsGenericType || 
-        type.GetGenericTypeDefinition() != typeof(List<>)) {
-      throw (new ApplicationException($"selection is not list: {selection}"));
-    }
-    if(selection is ICollection list) {
-      var message = new WindowMessage<ICollection> {
-        Type = WindowMessage<ICollection>.MessageType.Selection,
-        Value = list
-      };
-    }
-    else
-      Console.Error.WriteLine($"selection is not list: {selection}");
-  }
-
-  public RenderContent GetRenderContent() 
-    => this.CurrentScene.GetRenderContent();
 
   public enum WindowType {
     Main,
@@ -103,10 +117,10 @@ class Window: IInteractable {
     CloseWindow,
   }
 
-  public class WindowMessage<T>: EventArgs {
+  public class WindowMessage: EventArgs {
 
     public required MessageType Type { get; init; }
-    public required T Value { get; init; }
+    public required object Value { get; init; }
 
     public enum MessageType {
       Selection,

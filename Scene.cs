@@ -8,7 +8,10 @@ abstract class Scene: IEquatable<Scene> {
   public List<InputKey> AcceptKeys { get; protected set; } = new();
 
   public abstract (Window.WindowCommand, object?) ReceiveInput(InputKey input);
-  public abstract void OnRenderFinished();
+  public virtual (Window.WindowCommand, object?) ReceiveMessage(Window.WindowMessage message) {
+    return (Window.WindowCommand.None, null);
+  }
+  public virtual void OnRenderFinished() {}
   public abstract RenderContent GetRenderContent();
 
   protected Scene(ISceneName name, SceneState state) {

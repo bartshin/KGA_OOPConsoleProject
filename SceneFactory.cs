@@ -19,6 +19,8 @@ sealed class SceneFactory {
         return (this.CreateSelectScene(sceneName));
       case SceneType.Image:
         return (this.CreateImageScene(sceneName));
+      case SceneType.Input:
+        return (this.CreateInputScene(sceneName));
       default: 
         throw (new NotImplementedException());
     }
@@ -26,8 +28,9 @@ sealed class SceneFactory {
 
   private SceneType GetSceneType(Scene.ISceneName sceneName) {
     return (sceneName switch {
-        ImageSN imageScene => SceneType.Image,
-        SelectSN sceneScene => SceneType.Select,
+        ImageSN _ => SceneType.Image,
+        SelectSN _ => SceneType.Select,
+        AssistanceSN scene when scene.Name == AssistanceSN.InputScene => SceneType.Input,
         _ => throw new ArgumentException($"no scene type found for: {sceneName}")
         });
 
@@ -88,6 +91,10 @@ sealed class SceneFactory {
     }
   }
 
+  private InputScene CreateInputScene(Scene.ISceneName inputScene) {
+    return (new InputScene(inputScene));
+  }
+
   public struct ImageSN: Scene.ISceneName {
     public string Name { get; set; }
 
@@ -116,5 +123,6 @@ sealed class SceneFactory {
   public enum SceneType {
     Select,
     Image,
+    Input,
   }
 }

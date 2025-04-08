@@ -12,7 +12,7 @@ class Game {
         this.RemoveBottomWindow();
         return;
       }
-      this.Windows.Add(value);
+      this.CreateBottonWindow(value);
     }
   }
   readonly public GameConfig Config = new GameConfig();
@@ -49,11 +49,15 @@ class Game {
   private void SetBottomWindow(Scene mainScene) {
     if (SelectScene<object>.IsSelectScene(mainScene)) {
       if (this.BottomWindow == null) {
-        var scene = SceneFactory.Shared.Build(
+        var selectScene = (ISelectScene)mainScene;
+        InputScene scene = (InputScene)SceneFactory.Shared.Build(
             SceneFactory.AssistanceSN.InputSceneName
             );
+        scene.AllSelection = selectScene.AllSelections;
+        scene.MaxSelection = selectScene.MaxSelection;
         var window = new Window(scene, Window.WindowType.Bottom);
-        this.Windows.Add(window);
+        this.MainWindow.OnSendMessage += window.OnReceieveMessage;
+        this.BottomWindow = window;
       }
       else {
         throw new NotImplementedException();
@@ -62,6 +66,11 @@ class Game {
     else {
       throw new NotImplementedException();
     }
+  }
+
+  private void CreateBottonWindow(Window window) {
+    this.Windows.Add(window);
+    Renderer.Shared.SetWindow(window);
   }
 
   public Scene SelectSceneFrom(List<Scene> scenes) {
