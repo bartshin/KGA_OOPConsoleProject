@@ -8,7 +8,7 @@ class NavigationScene: Scene {
   public IList<string> Menu;
   public Action<string> OnSelect;
   private int currentIndex = 0;
-  private const int MenusForRow = 3;
+  private const int MenusForRow = 4;
 
   public NavigationScene(Scene.ISceneName name): base(name, Scene.SceneState.Rendering) { }
 

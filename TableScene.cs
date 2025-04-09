@@ -4,8 +4,8 @@ namespace ConsoleProject;
 
 class TableScene : Scene, INavigatable {
 
-  public string Title { get; init; }
-  private List<(string, string)> Items;
+  protected string Title { get; init; }
+  protected List<(string, string)> Items;
 
   public TableScene(Scene.ISceneName name): base(name, Scene.SceneState.Rendering) {
     switch (name) {
@@ -17,7 +17,8 @@ class TableScene : Scene, INavigatable {
         break;
     }
   }
-  public void GetStatus() {
+
+  protected virtual void GetStatus() {
     this.Items = new();
     var scene  = this.SceneName.Name;
     GameStatus.Section section = scene switch {

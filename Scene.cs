@@ -13,6 +13,7 @@ abstract class Scene: IEquatable<Scene> {
   public SceneState State { get; protected set; }
   public List<InputKey> AcceptKeys { get; protected set; } = new();
   public Action<GameStatus> GetGameStatus;
+  public Action<GameStatus> ModifyGameStatus;
 
   public abstract (Window.WindowCommand, object?) ReceiveInput(InputKey input);
   public virtual (Window.WindowCommand, object?) ReceiveMessage(Window.WindowMessage message) {

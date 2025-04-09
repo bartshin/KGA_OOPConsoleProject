@@ -29,7 +29,6 @@ sealed class Inventory: IEnumerable<Item> {
     }
     return (0.0);
   }
-
   public double GetTotalSoup() {
 
     if (this.Items.TryGetValue(
@@ -42,6 +41,13 @@ sealed class Inventory: IEnumerable<Item> {
 
   public bool IsContain(Item.ItemName name) {
     return (this.Items.ContainsKey(name));
+  }
+
+  public void ModifyAmount(Item.ItemName name, double amount) {
+    if (this.Items.TryGetValue( name, out Item item) 
+        && item is ConsumableItem consumableItem) {
+      consumableItem.Quantity += amount;
+    }
   }
 
   public IEnumerator<Item> GetEnumerator() {

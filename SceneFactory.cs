@@ -20,7 +20,9 @@ sealed class SceneFactory {
         SceneType.Main,
         PresentingSN scene when scene.Name == PresentingSN.InventoryScene=>
         SceneType.Table,
-        PresentingSN scene when scene.Name == PresentingSN. CharacterStatusScene =>
+        PresentingSN scene when scene.Name == PresentingSN.CharacterStatusScene =>
+        SceneType.Table,
+        PresentingSN scene when scene.Name == PresentingSN.QuataScene=>
         SceneType.Table,
         AssistanceSN scene when scene.Name == AssistanceSN.InputScene => SceneType.Input,
         AssistanceSN scene when scene.Name == AssistanceSN.NavigationScene => SceneType.Navigation,
@@ -177,6 +179,10 @@ sealed class SceneFactory {
   }
 
   private TableScene CreateTableScene(Scene.ISceneName scene) {
+    if (scene is PresentingSN presentingSN &&
+        presentingSN.Name == PresentingSN.QuataScene) {
+      return (new TableControlScene(scene));
+    }
     return (new TableScene(scene));
   }
 
@@ -222,6 +228,10 @@ sealed class SceneFactory {
     public const string InventoryScene = "Inventory Scene";
     public static readonly PresentingSN Inventory = new() {
       Name = PresentingSN.InventoryScene
+    };
+    public const string QuataScene = "Quata Scene";
+    public static readonly PresentingSN Quata = new() {
+      Name = PresentingSN.QuataScene
     };
   }
 

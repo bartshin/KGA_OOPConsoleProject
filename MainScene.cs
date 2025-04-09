@@ -11,6 +11,8 @@ class MainScene : Scene, INavigatable {
   public IList<string> Menu => new List<string>() {
     MainScene.MenuType.CharacterStatus,
     MainScene.MenuType.Inventory,
+    MainScene.MenuType.Quata,
+    MainScene.MenuType.Next,
   };
 
   public MainScene(Scene.ISceneName name,
@@ -32,6 +34,7 @@ class MainScene : Scene, INavigatable {
         lists.Add(("    "+ line, ConsoleColor.Gray));
       }
     }
+
     this.AddMargin(lists);
     var status = this.GetStatusText();
     foreach (var line in status) {
@@ -43,7 +46,12 @@ class MainScene : Scene, INavigatable {
 
   private List<string> GetStatusText() {
     List<string> texts = new();
-    GameStatus status = new([GameStatus.Section.RemainingSoup, GameStatus.Section.RemainingWater]); 
+    GameStatus status = new([
+        GameStatus.Section.RemainingSoup,
+        GameStatus.Section.RemainingWater,
+        GameStatus.Section.TodayQuota,
+        GameStatus.Section.TodayDead
+    ]); 
     this.GetGameStatus(status);
     if (status.TryGet<double>(GameStatus.Section.RemainingSoup, out double soup)) {
       texts.Add(
@@ -54,6 +62,17 @@ class MainScene : Scene, INavigatable {
       texts.Add(
           GameText.AddCosumableItemText(Item.ItemName.Water.Value, water)
           );
+    }
+    if (status.TryGet<(double, double)>(GameStatus.Section.TodayQuota, out var quata)) {
+      texts.Add("");
+      texts.Add(
+          string.Format($"오늘의 할당량 수프: {quata.Item1}, 물: {quata.Item2}")
+          );
+    }
+    if (status.TryGet<IList<string>>(GameStatus.Section.TodayDead, out var deadCharacters)) {
+      foreach (var character in deadCharacters) {
+         texts.Add(string.Format($"오늘 {character}가 하늘나라로 갔습니다.")); 
+      }
     }
     return (texts);
   }
@@ -74,6 +93,11 @@ class MainScene : Scene, INavigatable {
           return (Window.WindowCommand.CreateScene, SceneFactory.Shared.GetFullName(SceneFactory.PresentingSN.CharacterStatus));
         case MainScene.MenuType.Inventory:
           return (Window.WindowCommand.CreateScene, SceneFactory.Shared.GetFullName(SceneFactory.PresentingSN.Inventory));
+        case MainScene.MenuType.Quata:
+          return ( Window.WindowCommand.CreateScene,
+              SceneFactory.Shared.GetFullName(SceneFactory.PresentingSN.Quata));
+        case MainScene.MenuType.Next:
+          return (Window.WindowCommand.NextScene, null);
       }
     }
     return base.ReceiveMessage(message);
@@ -82,6 +106,8 @@ class MainScene : Scene, INavigatable {
   readonly struct MenuType {
     public const string CharacterStatus = "캐릭터 상태";
     public const string Inventory = "인벤토리";
+    public const string Quata = "할당량";
+    public const string Next = "다음날로";
   }
 }
 

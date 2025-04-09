@@ -13,5 +13,6 @@ class Program {
       if (InputForwarder.Shared.IsWaitingInput)
         InputForwarder.Shared.GetInput();
     }
+    Console.WriteLine("Game Over!");
   }
 }

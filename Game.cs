@@ -1,7 +1,9 @@
 namespace ConsoleProject;
 
 class Game {
-  public int TotalDays = 1;
+  private int totalDays = 0;
+  private (double food, double water) TodayQuota = (0.0, 0.0);
+  public List<string> TodayDeadChracter = new();
   public bool IsEnded { get; private set; } = false;
   public SceneProgressor Scenes { get; private set; }
   public List<Window> Windows { get; } = new List<Window>();
@@ -21,14 +23,37 @@ class Game {
   public Game(SceneProgressor scenes) {
     this.Scenes = scenes;
     this.Scenes.GetGameStatus = this.ServeGameStatus;
+    this.Scenes.ModifyGameStatus = this.HandleGameModification;
     this.SetMainWindow();
+  }
+
+  public void HandleGameModification(GameStatus status) {
+    foreach (var section in status.Sections ) {
+       switch (section) {
+         case GameStatus.Section.TodayQuota:
+           if (status.TryGet<(double, double)>(section, out var quota)) {
+            this.TodayQuota = quota;
+           }
+         break;
+         case GameStatus.Section.TotalDay:
+         if (status.TryGet<int>(section, out var day) &&
+             day == this.totalDays + 1) 
+            this.GoToNextDay(); 
+         else 
+           throw new ApplicationException("invalid modify totalDays");
+         
+         break;
+
+         default: throw new NotImplementedException();
+       } 
+    } 
   }
 
   public void ServeGameStatus(GameStatus status) {
     foreach (var section in status.Sections) {
       switch (section) {
         case GameStatus.Section.TotalDay:
-          status.Add(section, this.TotalDays);
+          status.Add(section, this.totalDays);
           break;
         case GameStatus.Section.RemainingWater:
           status.Add(section, this.data.Inven.GetTotalWater());
@@ -41,6 +66,17 @@ class Game {
           break;
         case GameStatus.Section.Items:
           status.Add(section, this.data.GetItems());
+          break;
+        case GameStatus.Section.TodayQuota:
+          status.Add(section, this.TodayQuota);
+          break;
+        case GameStatus.Section.MaxQuota:
+          status.Add(section, (this.data.Inven.GetTotalSoup(), 
+                this.data.Inven.GetTotalWater()));
+          break;
+        case GameStatus.Section.TodayDead:
+          status.Add(section, this.TodayDeadChracter);
+          this.TodayDeadChracter = new(); 
           break;
       } 
     }
@@ -61,7 +97,8 @@ class Game {
       case Window.WindowType.Main:
         if (window.CurrentScene is ISelectScene selectScene) 
           this.GetSelection(selectScene);
-        var nextScene = this.SelectSceneFrom(this.Scenes.GetNextScenes());
+        var nextScene = this.SelectSceneFrom(
+            this.Scenes.GetNextScenes(), window);
         if (nextScene is MainScene || 
             SelectScene<object>.IsSelectScene(nextScene))
           this.SetBottomWindow(nextScene);
@@ -91,6 +128,20 @@ class Game {
         break;
       default: throw new NotImplementedException();
     }
+  }
+  private void GoToNextDay() {
+    this.totalDays += 1;
+    bool isSurvived = this.data.GoToNextDay(this.TodayQuota);
+    if (!isSurvived) {
+      foreach (Character character in this.data.Characters.FindAll(c => !c.IsAlive)) {
+         this.TodayDeadChracter.Add(character.Name); 
+      }
+      this.data.RemoveDeadCharacter();
+      if (this.data.Characters.FindIndex(character => character.IsAlive) == -1)  {
+        this.IsEnded = true;
+      }
+    }
+    this.TodayQuota = (0.0, 0.0);
   }
 
   private void SetMainWindow() {
@@ -165,7 +216,13 @@ class Game {
     this.BottomWindow = window;
   }
 
-  public Scene SelectSceneFrom(List<Scene> scenes) {
+  public Scene SelectSceneFrom(List<Scene> scenes, Window window) {
+    if (window == this.MainWindow &&
+        window.CurrentScene.SceneName.Name == SceneFactory.PresentingSN.MainScene) {
+      var mainIndex = scenes.FindIndex(scene => scene.SceneName.Name == SceneFactory.PresentingSN.MainScene );
+      if (mainIndex != -1)
+        return (scenes[mainIndex]);
+    }
     // TODO: select next scene
     return (scenes[0]);
   }
@@ -198,14 +255,14 @@ class Game {
     public List<(string, string)> GetChracterStatus() {
       List<(string, string)> list = new();
       foreach (var character in this.Characters) {
-        if (character.currentStatus.Count == 0) {
-          list.Add((character.Name, GameText.GetCharacterComment(character.Name, null)));
-          continue;
-        }
-        foreach (var status in character.currentStatus) {
+        int count = 0;
+        foreach (var status in character.CurrentStatus) {
           list.Add((character.Name,
-                GameText.GetCharacterComment(character.Name, status))); 
+                GameText.GetCharacterComment(status))); 
+          ++count;
         }
+        if (count == 0) 
+          list.Add((character.Name, GameText.GetCharacterComment(null)));
       }
       return (list);
     }
@@ -215,11 +272,30 @@ class Game {
       foreach (var item in this.Inven) {
         string description = string.Format($"{item.Description}");
         if (item is ConsumableItem consumableItem) {
-          description += string.Format($" 보유량:{consumableItem.Quantity}"); 
+          description += string.Format($" 보유량:{double.Round(consumableItem.Quantity, 1)}".Replace('.', ',')); 
         }
         list.Add((item.Name, description)); 
       }
       return (list);
+    }
+
+    public bool GoToNextDay((double, double)quata) {
+      double food = quata.Item1 / this.Characters.Count;
+      double water = quata.Item2 / this.Characters.Count;
+      foreach (Character character in this.Characters) {
+        character.Consume(food, water); 
+      } 
+      this.Inven.ModifyAmount(Item.ItemName.Soup, - quata.Item1); 
+      this.Inven.ModifyAmount(Item.ItemName.Water,- quata.Item2);
+      return (this.Characters.FindIndex(
+            character => !character.IsAlive) == -1);
+    }
+
+    public void RemoveDeadCharacter() {
+      for (int i = this.Characters.Count - 1; i > 0; --i) {
+        if (!this.Characters[i].IsAlive) 
+          this.Characters.RemoveAt(i);
+      }
     }
   }
 }

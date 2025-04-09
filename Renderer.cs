@@ -52,8 +52,9 @@ class Renderer {
   private void OnWindowRefreshed(object sender, EventArgs args) {
     Window window = (Window)sender;
     if (window.Type == Window.WindowType.Main) {
-      if (this.popUpContent == null && window.PopupScene != null) 
+      if (window.PopupScene != null) {
         this.popUpContent = window.PopupScene.GetRenderContent(); 
+      }
       else if (this.popUpContent != null && window.PopupScene == null)
         this.popUpContent = null;
     }

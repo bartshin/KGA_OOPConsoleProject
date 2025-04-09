@@ -2,7 +2,7 @@ namespace ConsoleProject;
 
 class GameStatus {
   Dictionary<Section, object> dict;
-  public Section[] Sections { get; init; }
+  public IList<Section> Sections { get; init; }
 
   public enum Section {
     TotalDay,
@@ -10,10 +10,13 @@ class GameStatus {
     RemainingWater,
     CharacterStatus,
     Items,
+    TodayQuota,
+    MaxQuota,
+    TodayDead
   }
 
   public void Add(Section section, object value) {
-    this.dict.Add(section, value);
+    this.dict[section] = value;
   }
 
   public bool TryGet<T>(Section section, out T value) {
@@ -26,7 +29,7 @@ class GameStatus {
     return (true);
   }
 
-  public GameStatus(params Section[] sections) {
+  public GameStatus(params IList<Section> sections) {
     this.dict = new ();
     this.Sections = sections;
   }

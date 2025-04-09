@@ -38,7 +38,7 @@ sealed class CharacterFactory {
       case Character.Playable.Dolores:
         stats = new() {
           (Character.Stat.MentalToughness, 5.0),
-          (Character.Stat.DailyFoodIntake, 1.8),
+          (Character.Stat.DailyFoodIntake, 2.8),
           (Character.Stat.DailyWaterIntake, 1.9),
           (Character.Stat.DiseaseIncidence, 4.2)
         };
@@ -47,23 +47,23 @@ sealed class CharacterFactory {
         stats = new() {
           (Character.Stat.MentalToughness, 2.0),
           (Character.Stat.DailyFoodIntake, 2.5),
-          (Character.Stat.DailyWaterIntake, 2.0),
+          (Character.Stat.DailyWaterIntake, 1.5),
           (Character.Stat.DiseaseIncidence, 0.8)
         };
         break;
       case Character.Playable.Timmy: 
         stats = new() {
           (Character.Stat.MentalToughness, 5.0),
-          (Character.Stat.DailyFoodIntake, 1.5),
-          (Character.Stat.DailyWaterIntake, 1.7),
+          (Character.Stat.DailyFoodIntake, 1.0),
+          (Character.Stat.DailyWaterIntake, 0.7),
           (Character.Stat.DiseaseIncidence, 7.2)
         };
         break;
       case Character.Playable.Pancake: 
         stats = new() {
           (Character.Stat.MentalToughness, 6.0),
-          (Character.Stat.DailyFoodIntake, 0.8),
-          (Character.Stat.DailyWaterIntake, 0.9),
+          (Character.Stat.DailyFoodIntake, 2.3),
+          (Character.Stat.DailyWaterIntake, 1.3),
           (Character.Stat.DiseaseIncidence, 8.2)
         };
         break;
