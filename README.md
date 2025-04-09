@@ -19,7 +19,7 @@
 #### 진행 순서   
 	1. 게임 타이틀 (✅)
 	2. 캐릭터 선택 (✅)
-	3. 여러가지 아이템을 선택 (원작은 60초 제한이지만 async를 사용하지 않기 위해 시간 제한 없이 개수로 제한)   
+	3. 여러가지 아이템을 선택 (원작은 60초 제한이지만 async를 사용하지 않기 위해 시간 제한 없이 개수로 제한)  (✅)
 	4. 장면을 전환해 기본적인 캐릭터 상태, 이벤트를 보여주는 화면 (하루가 지날 때마다 이 화면으로 이동)   
 	5. 주어진 상황을 사용자에게 설명하고 사용자의 선택지를 제시
 	6. 사용자의 선택을 입력 받고 다음 일로 진행   
@@ -30,7 +30,7 @@
   - [ ] 상황에 따른 다음 장면으로 전환   
   - [ ] 게임의 종료 조건 판별   
   - [ ] 각 캐릭터의 상태를 관리   
-  - [ ] 소지 아이템 관리   
+  - [x] 소지 아이템 관리   
   - [ ] 아이템의 사용
   - [ ] 특정 대상을 강조해 보여주는 기능 (타이틀, 아이템, 캐릭터 등)   
   - [ ] 사용자에게 상황, 이벤트를 글로 설명   
@@ -123,19 +123,27 @@ classDiagram
 classDiagram
 	Renderer "1" --> "1..n" Window
 	InputForwarder "x" --> "1" Window 
-	Game "x" *-- "1" GameData
+	Game "x" *-- "1" GameData: has
 	Scene "x" --> "1" RenderContent: create
 	Scene "1" *-- "1" SceneNode: identify
 	SceneProgressor "x" --> "*" SceneNode: has
 	Game "1" --> "1" SceneProgressor: control
+	Game "1" --> "1..n" Window: control
 	Renderer "x" --> "1..n" RenderContent: consume
 	Window ..|> IInteractable
+	Window "1" *--> "1..n" Scene: has
 	ImageScene ..|> Scene
 	SelectScene ..|> Scene
+	MainScene..|> Scene
+	InputScene ..|> Scene
+	NavigationScene..|> Scene
 		
   class Game {
 		+bool isOver
-		+Int daysLeft
+		+Int totalDay
+		-GameData data	
+		-Window mainWindow
+		-Window? bottomWindow
   }
 	
 	note for GameData "위의 모든 게임 데이터"
@@ -149,6 +157,7 @@ classDiagram
   }
 	
   class Window {
+		+Scene currentScene
   }
 
   class Scene {
@@ -174,6 +183,17 @@ classDiagram
 	class ImageScene {
 	}
 
+	class MainScene{
+	}
+	
 	class SelectScene {
+	}
+	
+	note for InputScene "하단 윈도우"
+	class InputScene {
+	}
+	
+	note for NavigationScene "하단 윈도우"
+	class NavigationScene {
 	}
 ```
