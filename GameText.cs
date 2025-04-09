@@ -34,36 +34,36 @@ static class GameText {
       return string.Format($"{name}이 얼마 없다!");
     }
     if (amount < 3) {
-      return string.Format($"{name}이 오래가지 못할 것 같다. 아껴서 사용해야겠다");
+      return string.Format($"{name}이 오래가지 못할 것 같다. 아껴서 사용해야겠다.");
     }
     if (amount < 4) {
-      return string.Format($"{name}이 그렇게 넉넉하지는 않다 엄격하게 배급해야겠다");
+      return string.Format($"{name}이 그렇게 넉넉하지는 않다 엄격하게 배급해야겠다.");
     }
-    return string.Format($"당분간 {name} 걱정은 없다");
+    return string.Format($"당분간 {name} 걱정은 없다.");
   }
 
-  static public string AddCharacterComment(string name, Character.Status? status) {
+  static public string GetCharacterComment(string name, Character.Status? status) {
     if (status == null)
-      return string.Format($"{name}은 건강하고 활력이 넘친다");
+      return string.Format($"{name}은 건강하고 활력이 넘친다!");
     switch (status) {
       case Character.Status.Hungry:
-        return string.Format($"{name}은 배가 고프다");
+        return string.Format($"{name}은 배가 고프다.");
       case Character.Status.Starvation:
-        return string.Format($"{name}은 굶주렸다");
+        return string.Format($"{name}은 굶주렸다!");
       case Character.Status.Thirsty:
-        return string.Format($"{name}은 목이 마르다");
+        return string.Format($"{name}은 목이 마르다.");
       case Character.Status.Dehydration:
-        return string.Format($"{name}은 탈수 증세가 있다");
+        return string.Format($"{name}은 탈수 증세가 있다!");
       case Character.Status.Sick:
-        return string.Format($"{name}은 몸이 아프다");
+        return string.Format($"{name}은 몸이 아프다.");
       case Character.Status.Crazy:
-        return string.Format($"{name}은 정신 착란 증세가 있다");
+        return string.Format($"{name}은 정신 착란 증세가 있다!");
       case Character.Status.Fatigued:
-        return string.Format($"{name}은 심한 부상을 입었다");
+        return string.Format($"{name}은 심한 부상을 입었다!");
       case Character.Status.Hurt:
-        return string.Format($"{name}은 통증을 느끼고 있다");
+        return string.Format($"{name}은 통증을 느끼고 있다.");
       case Character.Status.Tired:
-        return string.Format($"{name}은 피곤하다");
+        return string.Format($"{name}은 피곤하다.");
       default: 
         throw new NotImplementedException();
     }

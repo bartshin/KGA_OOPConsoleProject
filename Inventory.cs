@@ -1,9 +1,14 @@
 using System;
+using System.Collections;
 
 namespace ConsoleProject;
 
-sealed class Inventory {
+sealed class Inventory: IEnumerable<Item> {
   private Dictionary<Item.ItemName, Item> Items;
+
+  public Inventory() {
+    this.Items = new();
+  }
 
   public void Add(Item.ItemName name) {
     var item = Item.CreateFrom(name);
@@ -39,7 +44,12 @@ sealed class Inventory {
     return (this.Items.ContainsKey(name));
   }
 
-  public Inventory() {
-    this.Items = new();
+  public IEnumerator<Item> GetEnumerator() {
+    return (this.Items.Values.GetEnumerator());
   }
+
+  IEnumerator IEnumerable.GetEnumerator() {
+    return GetEnumerator();
+  }
+
 }

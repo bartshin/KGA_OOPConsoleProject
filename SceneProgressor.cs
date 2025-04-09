@@ -12,6 +12,14 @@ sealed class SceneProgressor {
     return this.currentNode.Children.ConvertAll<Scene>(node => node.Value);
   }
 
+  public void BackToPreviousSceneFrom(Scene current) {
+    if (this.currentNode.Parent == null)
+      throw new ApplicationException($"no parent scene: {current.SceneName.Name}");
+    if (this.CurrentScene != current) 
+      throw new ApplicationException($"BackToPreviousSceneFrom different scene: {current.SceneName.Name}");
+    this.currentNode = this.currentNode.Parent;
+  }
+
   public void ProgressToNextScene(Scene next) {
     var node = this.currentNode.GetChildBy(next);
     if (node == null) {
@@ -92,10 +100,11 @@ sealed class SceneProgressor {
         TableScene inventory = (TableScene)SceneFactory.Shared.Build(
             SceneFactory.PresentingSN.Inventory
             );
+        inventory.GetGameStatus = this.GetGameStatus;
         TableScene characterStatus = (TableScene)SceneFactory.Shared.Build(
             SceneFactory.PresentingSN.CharacterStatus
             );
-      
+        characterStatus.GetGameStatus = this.GetGameStatus;
         return ([characterStatus, inventory]);
       default:
         return ([]);

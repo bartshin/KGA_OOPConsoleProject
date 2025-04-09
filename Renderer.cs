@@ -7,7 +7,7 @@ class Renderer {
   const int FrameTime = 20;
   const int Width = 100;
   public static int MainWindowHeight = 30;
-  public static int PopupStartHeight = 10;
+  public static int PopupStartHeight = 6;
   public static int PopupMargin = 8;
 
   private static Renderer instance;
@@ -51,9 +51,11 @@ class Renderer {
   
   private void OnWindowRefreshed(object sender, EventArgs args) {
     Window window = (Window)sender;
-    if (window.Type == Window.WindowType.Main &&
-        window.PopupScene != null) {
-      this.popUpContent = window.PopupScene.GetRenderContent(); 
+    if (window.Type == Window.WindowType.Main) {
+      if (this.popUpContent == null && window.PopupScene != null) 
+        this.popUpContent = window.PopupScene.GetRenderContent(); 
+      else if (this.popUpContent != null && window.PopupScene == null)
+        this.popUpContent = null;
     }
     this.SetRenderContentFor(window, window.GetRenderContent());
   } 
@@ -138,18 +140,19 @@ class Renderer {
   private void RenderToCurrentIndex(RenderContent render, (char, RenderColor)? verticalEdge) {
     var currentColor = this.foregroundColor ;
     bool isBackground = this.popUpContent != null && !this.isRenderingPopup;
+    int endIndex = isBackground ? Math.Min(Renderer.PopupStartHeight - 1 , render.CurrentIndex) : render.CurrentIndex;
     if (isBackground) {
       currentColor = RenderColor.DarkGray;
       Console.ForegroundColor = RenderColor.DarkGray;
     }
-    for (int i = 0; i < render.CurrentIndex; ++i) {
+    for (int i = 0; i < endIndex; ++i) {
       var (content, color) = render.Contents[i];
       if (currentColor != color && !isBackground) {
         currentColor = color;
         Console.ForegroundColor = color;
       }
       var length = Math.Max(Encoding.Unicode.GetByteCount(content), content.Length);
-      var paddingLength = this.isRenderingPopup ? 3:  ( Renderer.Width - length) / 3;
+      var paddingLength = (int)((Renderer.Width - length) * 0.2);
       var padding = length < Renderer.Width ? new string(' ', paddingLength): "";
       Console.WriteLine($"{padding}{content}");
       if (verticalEdge != null) {

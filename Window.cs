@@ -16,14 +16,22 @@ class Window: IInteractable {
   }
   public Func<List<Scene>> GetNextScenes;
   public Func<Scene?, Scene> GoToNextScene;
+  public Action<Scene> BackToPreviuosSceneFrom;
   public WindowType Type { get; init; }
   private Scene currentScene;
-  public Scene PopupScene { get; private set; }
+  public Scene popupScene;
+  public Scene PopupScene { 
+    get => this.popupScene; 
+    set {
+      this.popupScene = value;
+      this.UpdateAccept(value ?? this.CurrentScene);
+    }
+  }
   public Scene CurrentScene { 
     get => this.currentScene; 
     private set {
       this.currentScene = value;
-      this.AcceptKeys = value.AcceptKeys;
+      this.UpdateAccept(value);
     }}
 
   public void OnRenderStarted(Renderer renderer) {
@@ -50,7 +58,9 @@ class Window: IInteractable {
   }
 
   public void ReceiveInput(InputKey input) {
-    var (command, obj) = this.currentScene.ReceiveInput(input); 
+    var (command, obj) = this.PopupScene != null ?
+      this.PopupScene.ReceiveInput(input)
+      :this.currentScene.ReceiveInput(input); 
     this.HandleCommand(command, obj);
   }
 
@@ -80,6 +90,17 @@ class Window: IInteractable {
   public RenderContent GetRenderContent() 
     => this.CurrentScene.GetRenderContent();
 
+  private void UpdateAccept(Scene scene) {
+    if (scene is IInteractable interactable)  {
+      this.AcceptType = interactable.AcceptType;
+      this.AcceptKeys = interactable.AcceptKeys;
+    }
+    else {
+      this.AcceptType = IInteractable.InputType.None;
+      this.AcceptKeys = scene.AcceptKeys;
+    }
+  }
+
   private void HandleCommand(WindowCommand command, object? obj) {
     switch (command) {
       case WindowCommand.NextScene:
@@ -102,10 +123,19 @@ class Window: IInteractable {
       case WindowCommand.RefreshWindow:
         break;
       case WindowCommand.CreateScene:
-        string sceneName = (string)obj!;
+        string sceneName = ((string)obj!).Split(':')[1];
         var scenes = this.GetNextScenes();  
-        var scene = scenes.Find(scene => scene.SceneName.Name == sceneName);
-        this.PopupScene = this.GoToNextScene(scene);  
+        var scene = scenes.Find(scene => scene.SceneName.Name == sceneName)!;
+        scene.IsPopup = true;
+        this.PopupScene = this.GoToNextScene(scene); 
+        break;
+      case WindowCommand.CloseWindow:
+        if (this.PopupScene != null) {
+          this.BackToPreviuosSceneFrom?.Invoke(this.popupScene);
+          this.PopupScene = null;
+        }
+        else
+          this.BackToPreviuosSceneFrom?.Invoke(this.currentScene);
         break;
       case WindowCommand.None:
       default:

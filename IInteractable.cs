@@ -3,7 +3,7 @@ using ConsoleProject;
 public interface IInteractable {
   
   InputType AcceptType { get; }
-  IList<InputKey> AcceptKeys { get; }
+  public IList<InputKey> AcceptKeys { get; }
 
   enum InputType {
     None,

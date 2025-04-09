@@ -9,6 +9,7 @@ class GameStatus {
     RemainingSoup,
     RemainingWater,
     CharacterStatus,
+    Items,
   }
 
   public void Add(Section section, object value) {

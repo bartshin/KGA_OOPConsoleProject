@@ -16,7 +16,7 @@ class InputScene: Scene {
   public override RenderContent GetRenderContent() {
     List<(string, RenderColor)> contents = new();
     StringBuilder builder = new ();  
-    if (this.Selected.Count == this.MaxSelection)  {
+    if (this.Selected.Count == this.MaxSelection) {
       builder.AppendLine("   전부 선택되었습니다");
       builder.AppendLine("   선택된 번호를 다시 누르면 최소됩니다");
       builder.AppendLine("   엔터를 누르면 다음으로 진행합니다");
@@ -37,9 +37,8 @@ class InputScene: Scene {
     switch (message.Type) {
       case Window.WindowMessage.MessageType.Selection:
         this.State = SceneState.Rendering;
-        if (this.UpdateSelection((ICollection)message.Value))
-          return (Window.WindowCommand.RefreshWindow, null);
-        return (Window.WindowCommand.None, null);
+        this.UpdateSelection((ICollection)message.Value);
+        return (Window.WindowCommand.RefreshWindow, null);
       default:
         return (base.ReceiveMessage(message));
     } 
@@ -53,13 +52,10 @@ class InputScene: Scene {
     this.State = Scene.SceneState.Rendering;
   }
 
-  private bool UpdateSelection(ICollection newSelection) {
-    var current = this.Selected.Count == this.MaxSelection;
+  private void UpdateSelection(ICollection newSelection) {
     this.Selected.Clear();
     foreach (var selected in newSelection) {
       this.Selected.Add(selected);
     }
-    var updated = this.Selected.Count == this.MaxSelection;
-    return (current != updated);
   }
 }

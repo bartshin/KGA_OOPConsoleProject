@@ -4,27 +4,56 @@ namespace ConsoleProject;
 
 class TableScene : Scene, INavigatable {
 
+  public string Title { get; init; }
+  private List<(string, string)> Items;
+
   public TableScene(Scene.ISceneName name): base(name, Scene.SceneState.Rendering) {
+    switch (name) {
+      case { Name: SceneFactory.PresentingSN.InventoryScene }:
+        this.Title = "인벤토리";
+        break;
+      case { Name: SceneFactory.PresentingSN.CharacterStatusScene }:
+        this.Title = "캐릭터";
+        break;
+    }
   }
+  public void GetStatus() {
+    this.Items = new();
+    var scene  = this.SceneName.Name;
+    GameStatus.Section section = scene switch {
+      SceneFactory.PresentingSN.CharacterStatusScene => GameStatus.Section.CharacterStatus ,
+      SceneFactory.PresentingSN.InventoryScene => GameStatus.Section.Items
+    };
+    GameStatus status = new([section]);
+    this.GetGameStatus(status);
+    status.TryGet<List<(string ,string)>>(section, out var list);
+    list.ForEach((item) => this.Items.Add(item));
+  } 
 
-
-  public IList<string> Menu => new List<string>() {
-    "A",
-    "B",
-  };
+  public IList<string> Menu => new List<string>() { };
 
   public override RenderContent GetRenderContent() {
+    if (this.Items == null)
+      this.GetStatus();
     List<(string, RenderColor)> list = new();
-
-    list.Add((("Text"), RenderColor.White));
-    list.Add((("Text"), RenderColor.White));
-    list.Add((("Text"), RenderColor.White));
-    list.Add((("Text"), RenderColor.White));
-
+    string padding = new string(' ', 8);
+    list.Add((this.Title, RenderColor.DarkGreen));
+    list.Add(("(엔터키를 눌러서 닫기)", RenderColor.Yellow));
+    this.AddMargin(list, 1);
+    foreach (var (item, description) in this.Items!) {
+      list.Add((item, RenderColor.Gray));
+      var lines = this.SplitText(description);
+      foreach (var line in lines) 
+        list.Add((padding + line, RenderColor.DarkBlue));
+    }
+    this.AddMargin(list, 4);
     return (new RenderContent(list, RenderContent.AnimationType.None));
   }
 
   public override (Window.WindowCommand, object?) ReceiveInput(InputKey input) {
-    throw new NotImplementedException();
+    if (input == InputKey.Enter) {
+      return (Window.WindowCommand.CloseWindow, null);
+    }
+    return (Window.WindowCommand.None, null);
   }
 }

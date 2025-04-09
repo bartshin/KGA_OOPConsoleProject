@@ -6,7 +6,8 @@ namespace ConsoleProject;
 abstract class Scene: IEquatable<Scene> {
 
   protected const int MarginVertical = 2;
-  private const string Delimiters = "(?<=[.!\n])";
+  public bool IsPopup = false;
+  private const string Delimiters = "(?<=[.!\n\t])";
   public ISceneName SceneName { get; init; }
   public string? NextSceneName { get; init; }
   public SceneState State { get; protected set; }

@@ -114,7 +114,7 @@ sealed class SceneFactory {
       case SelectSN.SelectItemScene:
         return (new List<(InputKey, object)> {
           (InputKey.D1, Item.ItemName.GasMask.Value),
-          (InputKey.D2, Item.ItemName.Shovel.Value),
+          (InputKey.D2, Item.ItemName.Radio.Value),
           (InputKey.D3, Item.ItemName.Axe.Value),
           (InputKey.D4, Item.ItemName.Soup.Value),
           (InputKey.D5, Item.ItemName.Soup.Value),

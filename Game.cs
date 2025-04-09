@@ -37,7 +37,11 @@ class Game {
           status.Add(section, this.data.Inven.GetTotalSoup());
           break;
         case GameStatus.Section.CharacterStatus:
-          throw new NotImplementedException();
+          status.Add(section, this.data.GetChracterStatus());
+          break;
+        case GameStatus.Section.Items:
+          status.Add(section, this.data.GetItems());
+          break;
       } 
     }
   }
@@ -74,6 +78,7 @@ class Game {
     Scene scene = (Scene)selectScene;
     switch (scene.SceneName) {
       case { Name: SceneFactory.SelectSN.SelectCharacterScene }:
+       this.PickCharacters(CharacterFactory.Shared.Create(Character.Playable.Ted));
         foreach (string name in selection) {
           var character = CharacterFactory.CharacterName.GetPlayable(name);
           this.PickCharacters(CharacterFactory.Shared.Create(character));
@@ -97,6 +102,12 @@ class Game {
       return (this.GoToNextScene(mainWindow));
     };
     mainWindow.GetNextScenes = this.Scenes.GetNextScenes;
+    mainWindow.BackToPreviuosSceneFrom = (scene) => {
+      if (scene == mainWindow.PopupScene) {
+        this.SetBottomWindow(mainWindow.CurrentScene);
+      }
+      this.Scenes.BackToPreviousSceneFrom(scene);
+    };
     this.Windows.Add(mainWindow);
   }
 
@@ -114,7 +125,7 @@ class Game {
     if (topScene is MainScene mainScene) {
       var navigationScene = (NavigationScene)SceneFactory.Shared.Build(SceneFactory.AssistanceSN.Navigation);
       navigationScene.Menu = mainScene.Menu;
-      navigationScene.OnSelect = (selected) =>  {
+      navigationScene.OnSelect = (selected) => {
         InputForwarder.Shared.FocusedWindow = this.MainWindow;
       };
       if (this.BottomWindow == null) 
@@ -131,12 +142,12 @@ class Game {
       else
         scene = (InputScene)SceneFactory.Shared.Build(
             SceneFactory.AssistanceSN.Input);
+      scene.AllSelection = selectScene.AllSelections;
+      scene.MaxSelection = selectScene.MaxSelection;
       bool isBottomWindowExist = this.BottomWindow != null;
       if (!isBottomWindowExist) {
         this.CreateBottomWindow(scene);
       }
-      scene.AllSelection = selectScene.AllSelections;
-      scene.MaxSelection = selectScene.MaxSelection;
       if (isBottomWindowExist) {
         this.BottomWindow!.ChangeScene(scene);
       }
@@ -182,6 +193,33 @@ class Game {
 
     public void AddCharacter(Character character) {
       this.Characters.Add(character); 
+    }
+
+    public List<(string, string)> GetChracterStatus() {
+      List<(string, string)> list = new();
+      foreach (var character in this.Characters) {
+        if (character.currentStatus.Count == 0) {
+          list.Add((character.Name, GameText.GetCharacterComment(character.Name, null)));
+          continue;
+        }
+        foreach (var status in character.currentStatus) {
+          list.Add((character.Name,
+                GameText.GetCharacterComment(character.Name, status))); 
+        }
+      }
+      return (list);
+    }
+
+    public List<(string, string)> GetItems() {
+      List<(string, string)> list = new();
+      foreach (var item in this.Inven) {
+        string description = string.Format($"{item.Description}");
+        if (item is ConsumableItem consumableItem) {
+          description += string.Format($" 보유량:{consumableItem.Quantity}"); 
+        }
+        list.Add((item.Name, description)); 
+      }
+      return (list);
     }
   }
 }
