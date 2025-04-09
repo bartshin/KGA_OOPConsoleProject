@@ -16,6 +16,8 @@ sealed class SceneFactory {
     return (sceneName switch {
         ImageSN _ => SceneType.Image,
         SelectSN _ => SceneType.Select,
+        PresentingSN scene when scene.Name == PresentingSN.MainScene =>
+        SceneType.Main,
         AssistanceSN scene when scene.Name == AssistanceSN.InputScene => SceneType.Input,
         _ => throw new ArgumentException($"no scene type found for: {sceneName}")
         });
@@ -39,16 +41,18 @@ sealed class SceneFactory {
   public Scene Build(Scene.ISceneName sceneName, Dictionary<string, object> data) {
     var sceneType = SceneFactory.GetSceneType(sceneName);
     switch (sceneType) {
-      case SceneType.Select:
-        return (this.CreateSelectScene(sceneName));
       case SceneType.Image:
         return (this.CreateImageScene(sceneName, data));
-      case SceneType.Input:
-        return (this.CreateInputScene(sceneName));
+      case SceneType.Main:
+        return (this.CreateMainScene(sceneName, data));
       default: 
         throw (new NotImplementedException());
     }
   } 
+
+  private Scene CreateMainScene(Scene.ISceneName name, Dictionary<string, object> data) {
+    return (new MainScene(name, data));
+  }
 
   private Scene CreateSelectScene(Scene.ISceneName scene) {
 
@@ -79,9 +83,8 @@ sealed class SceneFactory {
                          멍하니 서 있지 마세요, 테드! 이제 60초밖에 안 남았으니까요!
                          꼭 필요한 아이템을 고르세요
                          """},
-                         {"maximumSelect", 3},
+                         {"maximumSelect", 8},
                          {"selections",itemSelection },
-                         //{"nextSceneName", ""}
                          })
                        );
       default: 
@@ -101,12 +104,19 @@ sealed class SceneFactory {
             });
       case SelectSN.SelectItemScene:
         return (new List<(InputKey, object)> {
-            (InputKey.D1, "방독면"),
-            (InputKey.D2, "삽"),
-            (InputKey.D3, "구급상자"),
-            (InputKey.D4, "도끼"),
-            (InputKey.D5, "식량"),
-            (InputKey.D6, "물"),
+            (InputKey.D1, Item.ItemName.GasMask.Value),
+            (InputKey.D3, Item.ItemName.Shovel.Value),
+            (InputKey.D4, Item.ItemName.Axe.Value),
+            (InputKey.D5, Item.ItemName.Soup.Value),
+            (InputKey.D6, Item.ItemName.Soup.Value),
+            (InputKey.D7, Item.ItemName.Soup.Value),
+            (InputKey.D8, Item.ItemName.Soup.Value),
+            (InputKey.D9, Item.ItemName.Soup.Value),
+            (InputKey.A, Item.ItemName.Water.Value),
+            (InputKey.S, Item.ItemName.Water.Value),
+            (InputKey.D, Item.ItemName.Water.Value),
+            (InputKey.F, Item.ItemName.Water.Value),
+            (InputKey.G, Item.ItemName.Water.Value),
             });
       default:
         throw (new ArgumentException($"no selection for scene: {scene.Name}"));
@@ -183,12 +193,19 @@ sealed class SceneFactory {
   public struct AssistanceSN: Scene.ISceneName {
     public string Name { get; set; }
     public const string InputScene = "Input Scene";
-    public static readonly AssistanceSN InputSceneName = new() { Name = AssistanceSN.InputScene };
+    public static readonly AssistanceSN Input = new() { Name = AssistanceSN.InputScene };
+  }
+
+  public struct PresentingSN : Scene.ISceneName {
+    public string Name { get; set; }
+    public const string MainScene = "Main Scene";
+    public static readonly PresentingSN Main = new() { Name = PresentingSN.MainScene };
   }
 
   public enum SceneType {
     Select,
     Image,
     Input,
+    Main,
   }
 }

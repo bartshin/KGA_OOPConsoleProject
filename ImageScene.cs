@@ -1,12 +1,9 @@
 using System;
-using System.Text.RegularExpressions;
 
 namespace ConsoleProject;
 
 class ImageScene: Scene {
-  const int MarginVertical = 2;
   const int PadLeft = 15;
-  const string Delimiters = "(?<=[.!\n])";
   private RenderContent renderContent;
   public override (Window.WindowCommand, object?) ReceiveInput(InputKey input) {
     return (Window.WindowCommand.NextScene, this.NextSceneName);
@@ -37,8 +34,8 @@ class ImageScene: Scene {
       ): base(name, SceneState.Rendering) { 
     this.Image = image;
     this.NextSceneName = nextSceneName;
-    this.TextAbove = textAbove != null ? Regex.Split(textAbove, ImageScene.Delimiters): [];
-    this.TextBelow = textBelow != null ? Regex.Split(textBelow, ImageScene.Delimiters): [];
+    this.TextAbove = textAbove != null ? this.SplitText(textAbove): [];
+    this.TextBelow = textBelow != null ? this.SplitText(textBelow): [];
     this.renderContent = this.CreateRenderContent();
   }
 
@@ -50,9 +47,9 @@ class ImageScene: Scene {
     string[] lines = this.Image.Split('\n');
     int numberOfLines = lines.Length;
     if (this.TextAbove.Length > 0) 
-      numberOfLines += this.TextAbove.Length + ImageScene.MarginVertical;
+      numberOfLines += this.TextAbove.Length + Scene.MarginVertical;
     if (this.TextBelow.Length > 0) 
-      numberOfLines += this.TextBelow.Length + ImageScene.MarginVertical;
+      numberOfLines += this.TextBelow.Length + Scene.MarginVertical;
     List<(string, RenderColor)> contents = new (numberOfLines);
     if (this.TextAbove.Length > 0) {
       foreach (var line in this.TextAbove) {
@@ -73,12 +70,6 @@ class ImageScene: Scene {
       this.AddMargin(contents);
     }
     return (new RenderContent(contents, RenderContent.AnimationType.TopToButtom));
-  }
-
-  private void AddMargin(List<(string, RenderColor)> content) {
-    for (int i = 0; i < ImageScene.MarginVertical; i++) {
-      content.Add(("\n", RenderColor.White));
-    }
   }
 }
 

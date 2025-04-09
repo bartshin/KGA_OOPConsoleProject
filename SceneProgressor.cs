@@ -1,10 +1,12 @@
 using System;
+using System.Text;
 namespace ConsoleProject;
 
 sealed class SceneProgressor {
   private Tree<Scene> sceneTree;
   private Tree<Scene>.Node currentNode;
   public Scene CurrentScene => this.currentNode.Value;
+  public Action<GameStatus> GetGameStatus;
 
   public List<Scene> GetNextScenes() {
     return this.currentNode.Children.ConvertAll<Scene>(node => node.Value);
@@ -79,10 +81,23 @@ sealed class SceneProgressor {
                 SceneFactory.SelectSN.SelectCharacter
                 ));
         }
-        throw new NotImplementedException();
       default: 
-        throw new NotImplementedException();
+        var mainScene = SceneFactory.PresentingSN.Main;
+        Dictionary<string, object> data = new();
+        this.FillMainSceneTexts(data);
+        var scene = (SceneFactory.Shared.Build(mainScene, data));
+        scene.GetGameStatus = this.GetGameStatus;
+        return (scene);
     }
+  }
+
+  private void FillMainSceneTexts(Dictionary<string, object> dict) {
+    StringBuilder builder = new();
+    GameStatus status = new (GameStatus.Section.TotalDay);
+    this.GetGameStatus(status);
+    if (status.TryGet<int>(GameStatus.Section.TotalDay, out int day))
+      builder.Append(GameText.AddDayText(day)); 
+    dict.Add(MainScene.MainText, builder.ToString());
   }
 }
 
