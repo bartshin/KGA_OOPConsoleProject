@@ -13,7 +13,6 @@ class Game {
         this.RemoveBottomWindow();
         return;
       }
-      this.CreateBottomWindow(value);
     }
   }
   readonly public GameConfig Config = new GameConfig();
@@ -39,18 +38,28 @@ class Game {
           break;
         case GameStatus.Section.CharacterStatus:
           throw new NotImplementedException();
-          break;
       } 
     }
   }
 
-  public Scene GoToNextScene(Window window) {
+  private Scene SelectScene(Scene scene, Window window) {
+    if (window.Type != Window.WindowType.Main)
+      throw (new NotImplementedException());
+    if (scene is TableScene tableScene) {
+      this.BottomWindow = null;
+      this.Scenes.ProgressToNextScene(scene); 
+    } 
+    return (scene);
+  }
+
+  private Scene GoToNextScene(Window window) {
     switch (window.Type) {
       case Window.WindowType.Main:
         if (window.CurrentScene is ISelectScene selectScene) 
           this.GetSelection(selectScene);
         var nextScene = this.SelectSceneFrom(this.Scenes.GetNextScenes());
-        if (SelectScene<object>.IsSelectScene(nextScene))
+        if (nextScene is MainScene || 
+            SelectScene<object>.IsSelectScene(nextScene))
           this.SetBottomWindow(nextScene);
         else
           this.BottomWindow = null;
@@ -82,7 +91,12 @@ class Game {
   private void SetMainWindow() {
     var mainWindow = new Window(this.Scenes.CurrentScene, 
         Window.WindowType.Main);
-    mainWindow.GoToNextScene = () => this.GoToNextScene(mainWindow);
+    mainWindow.GoToNextScene = (scene) => {
+      if (scene != null)
+        return (this.SelectScene(scene, mainWindow));
+      return (this.GoToNextScene(mainWindow));
+    };
+    mainWindow.GetNextScenes = this.Scenes.GetNextScenes;
     this.Windows.Add(mainWindow);
   }
 
@@ -96,36 +110,48 @@ class Game {
     Renderer.Shared.RemoveWindow(window);
   }
 
-  private void SetBottomWindow(Scene mainScene) {
-    if (SelectScene<object>.IsSelectScene(mainScene)) {
-        var selectScene = (ISelectScene)mainScene;
-      if (this.BottomWindow == null) {
-        InputScene scene = (InputScene)SceneFactory.Shared.Build(
-            SceneFactory.AssistanceSN.Input
-            );
-        scene.AllSelection = selectScene.AllSelections;
-        scene.MaxSelection = selectScene.MaxSelection;
-        var window = new Window(scene, Window.WindowType.Bottom);
-        this.MainWindow.OnSendMessage += window.OnReceieveMessage;
-        this.BottomWindow = window;
-      }
-      else if (this.BottomWindow.CurrentScene is InputScene inputScene) {
-        inputScene.AllSelection = selectScene.AllSelections;
-        inputScene.MaxSelection = selectScene.MaxSelection;
-        this.BottomWindow.Refresh();
-      }
-      else {
-        throw new NotImplementedException();
-      }
+  private void SetBottomWindow(Scene topScene) {
+    if (topScene is MainScene mainScene) {
+      var navigationScene = (NavigationScene)SceneFactory.Shared.Build(SceneFactory.AssistanceSN.Navigation);
+      navigationScene.Menu = mainScene.Menu;
+      navigationScene.OnSelect = (selected) =>  {
+        InputForwarder.Shared.FocusedWindow = this.MainWindow;
+      };
+      if (this.BottomWindow == null) 
+        this.CreateBottomWindow(navigationScene);
+      else  
+        this.BottomWindow.ChangeScene(navigationScene);
+      InputForwarder.Shared.FocusedWindow = this.BottomWindow!;
     }
-    else {
-      throw new NotImplementedException();
+    else if (SelectScene<object>.IsSelectScene(topScene)) {
+      var selectScene = (ISelectScene)topScene;
+      InputScene scene;
+      if (this.BottomWindow?.CurrentScene is InputScene inputScene) 
+        scene = inputScene;
+      else
+        scene = (InputScene)SceneFactory.Shared.Build(
+            SceneFactory.AssistanceSN.Input);
+      bool isBottomWindowExist = this.BottomWindow != null;
+      if (!isBottomWindowExist) {
+        this.CreateBottomWindow(scene);
+      }
+      scene.AllSelection = selectScene.AllSelections;
+      scene.MaxSelection = selectScene.MaxSelection;
+      if (isBottomWindowExist) {
+        this.BottomWindow!.ChangeScene(scene);
+      }
     }
   }
 
-  private void CreateBottomWindow(Window window) {
+  private void CreateBottomWindow(Scene scene) {
+    var window = new Window(scene, Window.WindowType.Bottom);
+    this.MainWindow.OnSendMessage += window.OnReceieveMessage;
+    window.OnSendMessage += this.MainWindow.OnReceieveMessage;
+    window.VertialEdge = '|';
+    window.HorizontalEdge = '-';
     this.Windows.Add(window);
     Renderer.Shared.SetWindow(window);
+    this.BottomWindow = window;
   }
 
   public Scene SelectSceneFrom(List<Scene> scenes) {

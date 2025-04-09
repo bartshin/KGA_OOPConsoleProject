@@ -82,7 +82,7 @@ sealed class SelectScene<T>: Scene, ISelectScene {
       this.Selected.Add(input);
     }
     if (this.MaximumSelect == 1)
-      return (Window.WindowCommand.SendMessage, inputValue);
+      return (Window.WindowCommand.SendMessage, new T[]{ inputValue });
     return (Window.WindowCommand.SendMessage, this.Selected);
   }
 
@@ -95,15 +95,16 @@ sealed class SelectScene<T>: Scene, ISelectScene {
     List<(string, RenderColor)> lists = new();
     this.AddMargin(lists, 1);
     foreach (var line in prompts) {
-      lists.Add(("\t" + line, RenderColor.Gray)); 
+      lists.Add(("   " + line, RenderColor.Gray)); 
     }
     this.AddMargin(lists, 1);
     string maximum = this.MaximumSelect.ToString() + (this.MaximumSelect > 1 ? " 항목까지": " 항목만");
-    lists.Add(("\t\t\t" + maximum + " 고를 수 있습니다.", RenderColor.Red));
+    lists.Add(("      " + maximum + " 고를 수 있습니다.", RenderColor.Red));
+    lists.Add((string.Format($"{this.Selected.Count} 항목 선택됨"), RenderColor.Gray));
     this.AddMargin(lists, 1);
     foreach (var (key, value) in this.Selections) {
        lists.Add((string.Format(
-               $"\t\t[{this.InputKeyToString(key)}]: {value}"), 
+               $"   [{this.InputKeyToString(key)}]: {value}"), 
              this.IsSelected(key) ? RenderColor.Blue: RenderColor.Green)); 
     }
     this.AddMargin(lists, 1);

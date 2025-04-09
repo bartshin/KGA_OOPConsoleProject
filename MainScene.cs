@@ -3,14 +3,22 @@ using System.Text;
 
 namespace ConsoleProject;
 
-class MainScene : Scene {
+class MainScene : Scene, INavigatable {
   public const string MainText = "Main text";
 
   public Dictionary<string, object> data;
 
+  public IList<string> Menu => new List<string>() {
+    MainScene.MenuType.CharacterStatus,
+    MainScene.MenuType.Inventory,
+  };
+
   public MainScene(Scene.ISceneName name,
       Dictionary<string, object> data)
-    : base(name, Scene.SceneState.Rendering) => this.data = data;
+    : base(name, Scene.SceneState.Rendering) {
+      this.data = data;
+      this.NextSceneName = null;
+    }
 
   public override RenderContent GetRenderContent() {
      
@@ -21,13 +29,13 @@ class MainScene : Scene {
         )  {
       var lines = this.SplitText(mainText);
       foreach (var line in lines) {
-        lists.Add(("\t" + line, ConsoleColor.Gray));
+        lists.Add(("    "+ line, ConsoleColor.Gray));
       }
     }
     this.AddMargin(lists);
     var status = this.GetStatusText();
     foreach (var line in status) {
-      lists.Add(("\t" + line, ConsoleColor.DarkGreen));
+      lists.Add(("    " + line, ConsoleColor.DarkGreen));
     }
     this.AddMargin(lists);
     return (new RenderContent(lists, RenderContent.AnimationType.None));
@@ -59,7 +67,21 @@ class MainScene : Scene {
   }
 
   public override (Window.WindowCommand, object?) ReceiveMessage(Window.WindowMessage message) {
+    if (message.Type == Window.WindowMessage.MessageType.Selection) {
+      string menu = ((IList<string>)message.Value)[0];
+      switch (menu) {
+        case MainScene.MenuType.CharacterStatus:
+          return (Window.WindowCommand.CreateScene, SceneFactory.Shared.GetFullName(SceneFactory.PresentingSN.CharacterStatus));
+        case MainScene.MenuType.Inventory:
+          return (Window.WindowCommand.CreateScene, SceneFactory.Shared.GetFullName(SceneFactory.PresentingSN.Inventory));
+      }
+    }
     return base.ReceiveMessage(message);
+  }
+
+  readonly struct MenuType {
+    public const string CharacterStatus = "캐릭터 상태";
+    public const string Inventory = "인벤토리";
   }
 }
 

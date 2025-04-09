@@ -47,47 +47,58 @@ sealed class SceneProgressor {
     this.AddNextScene(nextScene);
   }
 
-  private Scene CreateNextScene() {
+  private List<Scene> CreateNextScene() {
     var fullName = this.CurrentScene.NextSceneName.Split(':');
     var sceneType = Type.GetType(fullName[0].Trim()); 
     Scene.ISceneName sceneName = (Scene.ISceneName)Activator.CreateInstance(sceneType);
     sceneName.Name = fullName[1].Trim(); 
-    return (SceneFactory.Shared.Build(sceneName));
+    return ([SceneFactory.Shared.Build(sceneName)]);
   }
 
-  private Scene CreateNextScene(Scene.ISceneName current) {
+  private List<Scene> CreateNextScene(Scene.ISceneName current) {
     switch (current) {
       case SceneFactory.ImageSN imageScene when imageScene.Name == SceneFactory.ImageSN.TitleScene:
-        return (SceneFactory.Shared.Build(
+        return ([SceneFactory.Shared.Build(
               SceneFactory.ImageSN.CharacterIntro,
               new Dictionary<string, object>() {
               { "characterName", CharacterFactory.CharacterName.Ted }
-              }));
+              })]);
       case SceneFactory.ImageSN imageScene when imageScene.Name == SceneFactory.ImageSN.CharacterIntroScene  :
         ImageScene currentScene = (ImageScene)this.CurrentScene;
         string characterName = currentScene.Data["characterName"];
         var character = CharacterFactory.CharacterName.GetPlayable(characterName);
         var nextCharacter = Character.GetNext(character);
         if (nextCharacter != null) {
-          return (SceneFactory.Shared.Build(
+          return ([SceneFactory.Shared.Build(
                 SceneFactory.ImageSN.CharacterIntro,
                 new Dictionary<string, object>() {
               { "characterName", CharacterFactory.CharacterName.Get(nextCharacter.Value) }
                 }
-                ));
+                )]);
         }
         else {
-          return (SceneFactory.Shared.Build(
+          return ([SceneFactory.Shared.Build(
                 SceneFactory.SelectSN.SelectCharacter
-                ));
+                )]);
         }
-      default: 
+      case SceneFactory.SelectSN selectScene when selectScene.Name == SceneFactory.SelectSN.SelectItemScene: 
         var mainScene = SceneFactory.PresentingSN.Main;
         Dictionary<string, object> data = new();
         this.FillMainSceneTexts(data);
         var scene = (SceneFactory.Shared.Build(mainScene, data));
         scene.GetGameStatus = this.GetGameStatus;
-        return (scene);
+        return ([scene]);
+      case SceneFactory.PresentingSN presentingScene when presentingScene.Name == SceneFactory.PresentingSN.MainScene:
+        TableScene inventory = (TableScene)SceneFactory.Shared.Build(
+            SceneFactory.PresentingSN.Inventory
+            );
+        TableScene characterStatus = (TableScene)SceneFactory.Shared.Build(
+            SceneFactory.PresentingSN.CharacterStatus
+            );
+      
+        return ([characterStatus, inventory]);
+      default:
+        return ([]);
     }
   }
 

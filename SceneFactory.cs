@@ -18,10 +18,14 @@ sealed class SceneFactory {
         SelectSN _ => SceneType.Select,
         PresentingSN scene when scene.Name == PresentingSN.MainScene =>
         SceneType.Main,
+        PresentingSN scene when scene.Name == PresentingSN.InventoryScene=>
+        SceneType.Table,
+        PresentingSN scene when scene.Name == PresentingSN. CharacterStatusScene =>
+        SceneType.Table,
         AssistanceSN scene when scene.Name == AssistanceSN.InputScene => SceneType.Input,
+        AssistanceSN scene when scene.Name == AssistanceSN.NavigationScene => SceneType.Navigation,
         _ => throw new ArgumentException($"no scene type found for: {sceneName}")
         });
-
   }
 
   public Scene Build(Scene.ISceneName sceneName) {
@@ -33,8 +37,12 @@ sealed class SceneFactory {
         return (this.CreateImageScene(sceneName));
       case SceneType.Input:
         return (this.CreateInputScene(sceneName));
+      case SceneType.Navigation:
+        return (this.CreateNavigationScene(sceneName));
+      case SceneType.Table:
+        return (this.CreateTableScene(sceneName));
       default: 
-        throw (new NotImplementedException());
+        throw (new NotImplementedException($"{sceneName.Name}"));
     }
   } 
 
@@ -50,6 +58,10 @@ sealed class SceneFactory {
     }
   } 
 
+  public string GetFullName(Scene.ISceneName sceneName) {
+    return (sceneName.GetType().FullName + ":" + sceneName.Name);
+  }
+
   private Scene CreateMainScene(Scene.ISceneName name, Dictionary<string, object> data) {
     return (new MainScene(name, data));
   }
@@ -58,37 +70,34 @@ sealed class SceneFactory {
 
     switch (scene) {
       case { Name: SelectSN.SelectCharacterScene }:
-                   var characterSelection = GetSelections(scene);
-                   return (new SelectScene<string>(
-                         scene,
-                         new Dictionary<string, object> {
-                         {"prompt", 
-                         """
-                         핵전쟁이 일어났습니다!!!
-                         모두를 데려갈 수는 없습니다 테드
-                         당신은 함께 대피할 가족을 선택해야 합니다
-                         """},
-                         {"maximumSelect", 2 },
-                         {"selections",characterSelection },
-                         {"nextSceneName", GetFullName(SceneFactory.SelectSN.SelectItem)}
-                         })
-                       );
+         var characterSelection = GetSelections(scene);
+         return (new SelectScene<string>(
+               scene,
+               new Dictionary<string, object> {
+               {"prompt", 
+               """
+               핵전쟁이 일어났습니다!!!
+               모두를 데려갈 수는 없습니다 테드
+               당신은 함께 대피할 가족을 선택해야 합니다
+               """},
+               {"maximumSelect", 2 },
+               {"selections",characterSelection },
+               {"nextSceneName", GetFullName(SceneFactory.SelectSN.SelectItem)}
+               }));
       case { Name: SelectSN.SelectItemScene }:
-                   var itemSelection = GetSelections(scene);
-                   return (new SelectScene<string>(
-                         scene,
-                         new Dictionary<string, object> {
-                         {"prompt", 
-                         """
-                         멍하니 서 있지 마세요, 테드! 이제 60초밖에 안 남았으니까요!
-                         꼭 필요한 아이템을 고르세요
-                         """},
-                         {"maximumSelect", 8},
-                         {"selections",itemSelection },
-                         })
-                       );
-      default: 
-                   throw (new ArgumentException($"invalid name for SelectScene: {scene.Name}"));
+         var itemSelection = GetSelections(scene);
+         return (new SelectScene<string>(
+               scene,
+               new Dictionary<string, object> {
+               {"prompt", 
+               """
+               멍하니 서 있지 마세요, 테드! 이제 60초밖에 안 남았으니까요!
+               꼭 필요한 아이템을 고르세요
+               """},
+               {"maximumSelect", 8},
+               {"selections",itemSelection },
+               }));
+      default: throw (new ArgumentException($"invalid name for SelectScene: {scene.Name}"));
     }
   }
 
@@ -97,27 +106,27 @@ sealed class SceneFactory {
     switch (scene.Name) {
       case SelectSN.SelectCharacterScene:
         return (new List<(InputKey, object)> {
-            (InputKey.D1, CharacterFactory.CharacterName.Get(Character.Playable.Dolores)),
-            (InputKey.D2, CharacterFactory.CharacterName.Get(Character.Playable.MaryJane)),
-            (InputKey.D3, CharacterFactory.CharacterName.Get(Character.Playable.Timmy)),
-            (InputKey.D4, CharacterFactory.CharacterName.Get(Character.Playable.Pancake)),
-            });
+          (InputKey.D1, CharacterFactory.CharacterName.Get(Character.Playable.Dolores)),
+          (InputKey.D2, CharacterFactory.CharacterName.Get(Character.Playable.MaryJane)),
+          (InputKey.D3, CharacterFactory.CharacterName.Get(Character.Playable.Timmy)),
+          (InputKey.D4, CharacterFactory.CharacterName.Get(Character.Playable.Pancake)),
+          });
       case SelectSN.SelectItemScene:
         return (new List<(InputKey, object)> {
-            (InputKey.D1, Item.ItemName.GasMask.Value),
-            (InputKey.D3, Item.ItemName.Shovel.Value),
-            (InputKey.D4, Item.ItemName.Axe.Value),
-            (InputKey.D5, Item.ItemName.Soup.Value),
-            (InputKey.D6, Item.ItemName.Soup.Value),
-            (InputKey.D7, Item.ItemName.Soup.Value),
-            (InputKey.D8, Item.ItemName.Soup.Value),
-            (InputKey.D9, Item.ItemName.Soup.Value),
-            (InputKey.A, Item.ItemName.Water.Value),
-            (InputKey.S, Item.ItemName.Water.Value),
-            (InputKey.D, Item.ItemName.Water.Value),
-            (InputKey.F, Item.ItemName.Water.Value),
-            (InputKey.G, Item.ItemName.Water.Value),
-            });
+          (InputKey.D1, Item.ItemName.GasMask.Value),
+          (InputKey.D2, Item.ItemName.Shovel.Value),
+          (InputKey.D3, Item.ItemName.Axe.Value),
+          (InputKey.D4, Item.ItemName.Soup.Value),
+          (InputKey.D5, Item.ItemName.Soup.Value),
+          (InputKey.D6, Item.ItemName.Soup.Value),
+          (InputKey.D7, Item.ItemName.Soup.Value),
+          (InputKey.D8, Item.ItemName.Soup.Value),
+          (InputKey.A, Item.ItemName.Water.Value),
+          (InputKey.S, Item.ItemName.Water.Value),
+          (InputKey.D, Item.ItemName.Water.Value),
+          (InputKey.F, Item.ItemName.Water.Value),
+          (InputKey.G, Item.ItemName.Water.Value),
+          });
       default:
         throw (new ArgumentException($"no selection for scene: {scene.Name}"));
     }
@@ -126,16 +135,14 @@ sealed class SceneFactory {
   private ImageScene CreateImageScene(Scene.ISceneName imageScene) {
     switch (imageScene) {
       case { Name: ImageSN.TitleScene }:
-                   return (new ImageScene(
-                         imageScene,
-                         new Dictionary<string, string> {
-                         { "name", imageScene.Name },
-                         { "image", Assets.TitleImage },
-                         { "textBelow", "아무키나 눌러주세요" },
-                         }));
-
-      default: 
-                   throw (new ArgumentException($"invalid ImageSN: {imageScene}"));
+        return (new ImageScene(
+          imageScene,
+          new Dictionary<string, string> {
+          { "name", imageScene.Name },
+          { "image", Assets.TitleImage },
+          { "textBelow", "아무키나 눌러주세요" },
+          }));
+      default: throw (new ArgumentException($"invalid ImageSN: {imageScene}"));
     }
   }
 
@@ -151,7 +158,7 @@ sealed class SceneFactory {
               { "name", imageScene.Name },
               { "characterName", characterName },
               { "image", image },
-              { "textAbove", string.Format($"캐릭터 소개\n\t이름: {characterName}")},
+              { "textAbove", string.Format($"캐릭터 소개\n    이름: {characterName}")},
               { "textBelow", 
               CharacterFactory.CharacterDescription.Get(character) + "\n계속하려면 아무키나 누르세요"}
               })
@@ -165,9 +172,15 @@ sealed class SceneFactory {
     return (new InputScene(inputScene));
   }
 
-  private string GetFullName(Scene.ISceneName sceneName) {
-    return (sceneName.GetType().FullName + ":" + sceneName.Name);
+  private NavigationScene CreateNavigationScene(Scene.ISceneName scene) {
+    return (new NavigationScene(scene));
   }
+
+  private TableScene CreateTableScene(Scene.ISceneName scene) {
+    return (new TableScene(scene));
+  }
+
+
 
   public struct ImageSN: Scene.ISceneName {
     public string Name { get; set; }
@@ -194,12 +207,22 @@ sealed class SceneFactory {
     public string Name { get; set; }
     public const string InputScene = "Input Scene";
     public static readonly AssistanceSN Input = new() { Name = AssistanceSN.InputScene };
+    public const string NavigationScene = "Navigation Scene";
+    public static readonly AssistanceSN Navigation = new() { Name = AssistanceSN.NavigationScene };
   }
 
   public struct PresentingSN : Scene.ISceneName {
     public string Name { get; set; }
     public const string MainScene = "Main Scene";
     public static readonly PresentingSN Main = new() { Name = PresentingSN.MainScene };
+    public const string CharacterStatusScene = "Character Status Scene";
+    public static readonly PresentingSN CharacterStatus = new() {
+      Name = PresentingSN.CharacterStatusScene
+    };
+    public const string InventoryScene = "Inventory Scene";
+    public static readonly PresentingSN Inventory = new() {
+      Name = PresentingSN.InventoryScene
+    };
   }
 
   public enum SceneType {
@@ -207,5 +230,7 @@ sealed class SceneFactory {
     Image,
     Input,
     Main,
+    Navigation,
+    Table,
   }
 }

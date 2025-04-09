@@ -2,7 +2,6 @@ using ConsoleProject;
 
 public interface IInteractable {
   
-  bool IsInputDisplayed { get; }
   InputType AcceptType { get; }
   IList<InputKey> AcceptKeys { get; }
 
@@ -13,3 +12,14 @@ public interface IInteractable {
   };
 }
 
+public interface INavigatable: IInteractable {
+  IList<string> Menu { get; }  
+  InputType IInteractable.AcceptType => InputType.SpecificKeys;
+  IList<InputKey> IInteractable.AcceptKeys => new InputKey[] {
+    InputKey.LeftArrow,
+    InputKey.RightArrow,
+    InputKey.UpArrow,
+    InputKey.DownArrow,
+    InputKey.Enter,
+  };
+}

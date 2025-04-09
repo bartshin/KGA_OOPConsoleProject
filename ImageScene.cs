@@ -64,7 +64,7 @@ class ImageScene: Scene {
     if (this.TextBelow.Length > 0) {
       this.AddMargin(contents);
       foreach (var line in this.TextBelow) {
-        contents.Add(("\t" + line.PadLeft(ImageScene.PadLeft, ' '), 
+        contents.Add(("     " + line.PadLeft(ImageScene.PadLeft, ' '), 
               RenderColor.Green));
       }
       this.AddMargin(contents);

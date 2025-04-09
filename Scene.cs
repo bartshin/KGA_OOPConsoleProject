@@ -30,7 +30,7 @@ abstract class Scene: IEquatable<Scene> {
   }
   protected void AddMargin(List<(string, RenderColor)> content, int value= Scene.MarginVertical) {
     for (int i = 0; i < Scene.MarginVertical; i++) {
-      content.Add(("\n", RenderColor.White));
+      content.Add((" ", RenderColor.White));
     }
   }
 

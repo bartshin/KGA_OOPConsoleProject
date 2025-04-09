@@ -4,6 +4,9 @@ namespace ConsoleProject;
 
 class Window: IInteractable {
 
+  public char? HorizontalEdge = null;
+  public char? VertialEdge = null;
+
   public event EventHandler OnContentRefreshed;
   public bool IsInputDisplayed { get; protected set; } = true;
   public event EventHandler<WindowMessage> OnSendMessage;
@@ -11,9 +14,11 @@ class Window: IInteractable {
   public IList<InputKey> AcceptKeys { 
     get; protected set; 
   }
-  public Func<Scene> GoToNextScene;
+  public Func<List<Scene>> GetNextScenes;
+  public Func<Scene?, Scene> GoToNextScene;
   public WindowType Type { get; init; }
   private Scene currentScene;
+  public Scene PopupScene { get; private set; }
   public Scene CurrentScene { 
     get => this.currentScene; 
     private set {
@@ -51,10 +56,6 @@ class Window: IInteractable {
 
   public void SendSelection(object selection) {
     var type = selection.GetType();
-    if (!type.IsGenericType || 
-        type.GetGenericTypeDefinition() != typeof(List<>)) {
-      throw (new ApplicationException($"selection is not list: {selection}"));
-    }
     if(selection is ICollection list) {
       var message = new WindowMessage {
         Type = WindowMessage.MessageType.Selection,
@@ -71,7 +72,8 @@ class Window: IInteractable {
     this.HandleCommand(command, obj); 
   }
 
-  public void Refresh() {
+  public void ChangeScene(Scene scene) {
+    this.CurrentScene = scene; 
     this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
   }
 
@@ -81,7 +83,7 @@ class Window: IInteractable {
   private void HandleCommand(WindowCommand command, object? obj) {
     switch (command) {
       case WindowCommand.NextScene:
-        Scene nextScene = this.GoToNextScene();
+        Scene nextScene = this.GoToNextScene(null);
         this.CurrentScene = nextScene;
         break;
       case WindowCommand.SendMessage:
@@ -89,13 +91,21 @@ class Window: IInteractable {
           Console.Error.WriteLine($"OnSendMessage is null: {this}");
           break;
         }
-        if (SelectScene<object>.IsSelectScene(this.CurrentScene) && obj != null)
+        if ((this.CurrentScene is NavigationScene ||
+            SelectScene<object>.IsSelectScene(this.CurrentScene))
+            && obj != null)
           this.SendSelection(obj);
         else {
           throw new NotImplementedException();
         }
         break;
       case WindowCommand.RefreshWindow:
+        break;
+      case WindowCommand.CreateScene:
+        string sceneName = (string)obj!;
+        var scenes = this.GetNextScenes();  
+        var scene = scenes.Find(scene => scene.SceneName.Name == sceneName);
+        this.PopupScene = this.GoToNextScene(scene);  
         break;
       case WindowCommand.None:
       default:
@@ -107,12 +117,13 @@ class Window: IInteractable {
 
   public enum WindowType {
     Main,
-    Bottom
+    Bottom,
   }
 
   public enum WindowCommand {
     None,
     NextScene,
+    CreateScene,
     RefreshWindow,
     SendMessage,
     CloseWindow,

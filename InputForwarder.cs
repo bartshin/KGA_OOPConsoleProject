@@ -28,9 +28,7 @@ class InputForwarder {
   public void GetInput() {
     if (!this.IsWaitingInput)
       return ;
-    var input = Console.ReadKey(
-        this.FocusedWindow.IsInputDisplayed
-        ).Key;
+    var input = Console.ReadKey(false).Key;
     if (this.FocusedWindow.AcceptType == IInteractable.InputType.AnyKey
         || this.FocusedWindow.AcceptKeys.Contains(input))
       this.FocusedWindow.ReceiveInput(input);
