@@ -117,6 +117,8 @@ class Game {
         else
           this.BottomWindow = null;
         this.Scenes.ProgressToNextScene(nextScene);
+        if (nextScene is MainScene) 
+          this.BottomWindow?.RefreshWindow();
         return (nextScene);
       default: throw new NotImplementedException();
     }

@@ -9,10 +9,10 @@ class TableScene : Scene, INavigatable {
 
   public TableScene(Scene.ISceneName name): base(name, Scene.SceneState.Rendering) {
     switch (name) {
-      case { Value: SceneFactory.PresentingSN.InventoryScene }:
+      case { Name: SceneFactory.PresentingSN.InventoryScene }:
         this.Title = "인벤토리";
         break;
-      case { Value: SceneFactory.PresentingSN.CharacterStatusScene }:
+      case { Name: SceneFactory.PresentingSN.CharacterStatusScene }:
         this.Title = "캐릭터";
         break;
     }
@@ -20,7 +20,7 @@ class TableScene : Scene, INavigatable {
 
   protected virtual void GetStatus() {
     this.Items = new();
-    var scene  = this.SceneName.Value;
+    var scene  = this.SceneName.Name;
     GameStatus.Section section = scene switch {
       SceneFactory.PresentingSN.CharacterStatusScene => GameStatus.Section.CharacterStatus ,
       SceneFactory.PresentingSN.InventoryScene => GameStatus.Section.Items

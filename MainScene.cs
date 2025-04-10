@@ -29,15 +29,15 @@ class MainScene : Scene, INavigatable {
 
     GameStatus status = new([GameStatus.Section.IsAnyCharacterFarming]);
     this.GetGameStatus?.Invoke(status);
-    if (status.TryGet<bool>(GameStatus.Section.IsAnyCharacterFarming, out bool isFarming) && !isFarming) {
-      if (!this.menu.Contains(MainScene.MenuType.Farming))
+    if (status.TryGet<bool>(GameStatus.Section.IsAnyCharacterFarming, out bool isFarming)) {
+      if (!isFarming && !this.menu.Contains(MainScene.MenuType.Farming))
         this.menu.Add(MainScene.MenuType.Farming);
+      else if (isFarming) 
+        this.menu.Remove(MainScene.MenuType.Farming);
     }
   }
 
   public override RenderContent GetRenderContent() {
-    this.UpdateMenu();
-     
     List<(string, RenderColor)> lists = new();
     this.AddMargin(lists);
     if (data.TryGetValue(MainScene.MainText, out object text) &&

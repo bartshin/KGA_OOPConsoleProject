@@ -8,6 +8,7 @@ class Window: IInteractable {
   public char? VertialEdge = null;
 
   public event EventHandler OnContentRefreshed;
+  public void RefreshWindow() => this.OnContentRefreshed?.Invoke(this, EventArgs.Empty);
   public bool IsInputDisplayed { get; protected set; } = true;
   public event EventHandler<WindowMessage> OnSendMessage;
   public IInteractable.InputType AcceptType { get; protected set; }

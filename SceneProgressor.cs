@@ -25,6 +25,8 @@ sealed class SceneProgressor {
 
   public void ProgressToNextScene(Scene next) {
     var node = this.currentNode.GetChildBy(next);
+    if (next is MainScene main)
+      main.UpdateMenu();
     if (node == null) {
       if (next == this.currentNode.Parent?.Value) {
         this.currentNode = this.currentNode.Parent;
@@ -34,9 +36,10 @@ sealed class SceneProgressor {
       throw (new ApplicationException($"${next.SceneName} is not child of current scene"));
     }
     this.currentNode = node;
-    if (next is MainScene) {
+    if (next is MainScene mainScene) {
       sceneTree.ChangeRoot(node);
       this.ProgressToNextDay(); 
+      mainScene.UpdateMenu();
     }
     this.OnEnterScene();
   }
@@ -136,12 +139,23 @@ sealed class SceneProgressor {
     TableControlScene quata = (TableControlScene)SceneFactory.Shared.Build(SceneFactory.PresentingSN.Quata);
     quata.ModifyGameStatus = this.ModifyGameStatus;
     scenes.Add(quata);
-    var characters = this.GetCharacterStatus().FindAll(
-          status => status.Item2 != Character.FarmingText);
-    if (characters.Count > 1) {
+    List<(string, string)> farmers = new();
+    var farmerStatus = this.GetCharacterStatus();
+    foreach (var (name, status) in farmerStatus) {
+      if (status == Character.FarmingText)
+        continue;
+      var index = (farmers.FindIndex(f => f.Item1 == name));
+      if (index == -1)
+        farmers.Add((name, status));
+      else {
+        var previous = farmers[index];
+        farmers[index] = (previous.Item1, string.Format($"{previous.Item2}, {status}"));
+      }
+    }
+    if (farmers.Count > 1) {
       var farmer = (SelectScene<string>)SceneFactory.Shared.Build(
           SceneFactory.SelectSN.SelectFarmer,
-          new () {{"characters", characters }});
+          new () {{"characters", farmers }});
       //farmer.ModifyGameStatus = this.ModifyGameStatus;
       scenes.Add(farmer);
     }
