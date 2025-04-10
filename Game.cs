@@ -153,12 +153,22 @@ class Game {
   private bool CheckGameEnded() {
     if (this.IsEnded)
       return (true);
-    if (this.totalDays >= Config.NumberOfTotalDays) {
+    var winningDays = Config.NumberOfTotalDays;
+    if (this.data.Inven.IsContain(Item.ItemName.Radio)) 
+      winningDays -= 5;
+    if (this.totalDays >= winningDays) {
       this.IsEnded = true;
       this.IsSuccess = true;
       return (true);
     }
     return (false);
+  }
+
+  private string GetWinnngMessage() {
+    StringBuilder builder = new();
+    if (this.data.Inven.IsContain(Item.ItemName.Radio)) 
+      builder.AppendLine("라디오가 있어서 빠른 구출을 도움이 되었습니다"); 
+    return (builder.ToString());
   }
 
   private void RenderEnding() {
@@ -170,6 +180,7 @@ class Game {
           new() {
           { "isSuccess", this.IsSuccess },
           { "numberOfSurviver", this.NumberOfSurviver },
+          { "winningMessage", this.GetWinnngMessage() }
           });
     Renderer.Shared.OnRenderFinished += ((_, _) => {
         Console.CursorVisible = true;
@@ -331,7 +342,12 @@ class Game {
 
     public void GoFarming(Character character) {
       character.IsFarming = true;
-      character.DoWork();
+      if (this.Inven.IsContain(Item.ItemName.FirstAidKit)) 
+        character.DoWork(Item.ItemName.FirstAidKit);
+      else if(this.Inven.IsContain(Item.ItemName.GasMask)) 
+        character.DoWork(Item.ItemName.GasMask);
+      else
+        character.DoWork();
     }
 
     public string GetFarmingResult() {
@@ -339,8 +355,11 @@ class Game {
       if (farmer == null)
         return (null);
       farmer.IsFarming = false;
-      bool food = this.random.Next(0, 100) > 70;
-      bool water = this.random.Next(0, 100) > 70;
+      var chance = 70;
+      if (this.Inven.IsContain(Item.ItemName.Axe))
+        chance -= 20;
+      bool food = this.random.Next(0, 100) > chance;
+      bool water = this.random.Next(0, 100) > chance;
       if (food)
         this.Inven.Add(Item.ItemName.Soup);
       if (water)

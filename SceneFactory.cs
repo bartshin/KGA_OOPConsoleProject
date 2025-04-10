@@ -201,6 +201,9 @@ sealed class SceneFactory {
         string endingAboveText = isSuccess ? "드디어 이 방공호에도 구급대원들이 도착했습니다": "저런 더 이상 버티지 못했네요";
         string endingBelowText = isSuccess ? string.Format($"축하합니다 Ted 가족은 총 {numberOfSurvier}명이 살아남았습니다"):
           "핵폭발로 인해 Ted 가족은 전부 하늘나라로 가게 되었습니다";
+        if (isSuccess && data.TryGetValue("winningMessage", out var winningMessage)) {
+          endingAboveText = (string)winningMessage;
+        }
         return (new ImageScene(SceneFactory.ImageSN.Title,
                 new Dictionary<string, string> {
                   {"image", endingImage },
