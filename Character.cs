@@ -40,13 +40,13 @@ sealed class Character {
 
   public void DoWork(Item.ItemName? item = null) {
     double sicknessChance = this.Stats[Stat.DiseaseIncidence] * 10;
-    if (item == Item.ItemName.FirstAidKit)
-      sicknessChance *= 0.5;
-    else if (item == Item.ItemName.GasMask)
-      sicknessChance *= 0.8;
-    if (random.Next(0, 100) < (int)sicknessChance) {
-      this.SetStatus(Status.Sick);
-    }
+//    if (item == Item.ItemName.FirstAidKit)
+//      sicknessChance *= 0.5;
+//    else if (item == Item.ItemName.GasMask)
+//      sicknessChance *= 0.8;
+//    if (random.Next(0, 100) < (int)sicknessChance) {
+//      this.SetStatus(Status.Sick);
+//    }
     this.Health -= 50.0;
     this.UpdateHealthStatus();
     if (this.Health < 0)
