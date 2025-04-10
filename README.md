@@ -14,16 +14,16 @@
 </tr>
 </table>
 - 선택이유: 동적인 화면이 많이 필요하지 않고 사용자의 선택에 따라 다양한 상황으로 흘러갈 수 있어 콘솔에서 플레이하기에 적합하다고 생각됨
-
+- 결과: 동적인 화면 없이 게임 진행은 가능하지만 이벤트를 만들지 못함
 ## 필수 backlog   
 #### 진행 순서   
 	1. 게임 타이틀 (✅)
 	2. 캐릭터 선택 (✅)
 	3. 여러가지 아이템을 선택 (원작은 60초 제한이지만 async를 사용하지 않기 위해 시간 제한 없이 개수로 제한)  (✅)
-	4. 장면을 전환해 기본적인 캐릭터 상태, 이벤트를 보여주는 화면 (하루가 지날 때마다 이 화면으로 이동)   
+	4. 장면을 전환해 기본적인 캐릭터 상태, 이벤트를 보여주는 화면 (하루가 지날 때마다 이 화면으로 이동)  (✅)
 	5. 주어진 상황을 사용자에게 설명하고 사용자의 선택지를 제시
-	6. 사용자의 선택을 입력 받고 다음 일로 진행   
-	7. 정해진 날, 조건이 끝날 경우에는 게임 종료 후 결과 출력   
+	6. 사용자의 선택을 입력 받고 다음 일로 진행   (✅)
+	7. 정해진 날, 조건이 끝날 경우에는 게임 종료 후 결과 출력   (✅)
        게임이 종료하지 않으면 3으로 이동 후 진행   
 
 #### 기능   
@@ -31,11 +31,11 @@
   - [x] 게임의 종료 조건 판별   
   - [x] 각 캐릭터의 상태를 관리   
   - [x] 소지 아이템 관리   
-  - [x] 아이템의 사용
+  - [ ] 아이템의 사용
   - [x] 특정 대상을 강조해 보여주는 기능 (타이틀, 아이템, 캐릭터 등)   
-  - [x] 사용자에게 상황, 이벤트를 글로 설명   
-  - [x] 사용자에게 선택지를 제시하고 입력을 받는 기능  
-  - [x] 사용자의 선택에 따라 게임의 데이터를 처리
+  - [ ] 사용자에게 상황, 이벤트를 글로 설명   
+  - [ ] 사용자에게 선택지를 제시하고 입력을 받는 기능  
+  - [ ] 사용자의 선택에 따라 게임의 데이터를 처리
 ## 추가 backlog
 #### 진행에 관한 변경   
   - [ ] 게임 시작시 아이템을 고르는 맵을 제공, 시간 대신 걸음 수로 이동 제한   
@@ -58,6 +58,8 @@ classDiagram
 	Event "1" --> "0..1" Item: required
 	Character "1" *-- "0.." Status: has
 	class Character {
+		+bool isAlive
+		+bool isFarming
 		+String name	 
 		+Double health
 		+Double mentalHealth
@@ -65,10 +67,9 @@ classDiagram
 		+Double starving
 		-List~Status~ currentStatus
 		-Dictionary~Stat, double~ stats
-		
-		+useItem(Item item) void
-		+getConditionLevel() double
-		+goToNextDay() void
+
+		+void doWork()
+		+void takeRest()
 	}
 
 	class Status {
@@ -99,7 +100,7 @@ classDiagram
 
 	note for ConsumableItem "식량과 같이 소비되는 아이템"
 	class ConsumableItem {
-		
+		+double Quatity		
 	}
 
 	note for ReusableItem "확률적으로 소모될 수 있음"
@@ -111,6 +112,7 @@ classDiagram
 		-Dictionary~Item,double~ items
 	}
 
+	note for Event "구현하지 못함"
 	class Event {
 		+Nullable~Item~ helpfulItem
 		+impactTo(Character target)	void
@@ -136,6 +138,8 @@ classDiagram
 	SelectScene ..|> Scene
 	MainScene..|> Scene
 	InputScene ..|> Scene
+	TableScene ..|> Scene
+	TableControlScene ..|> TableScene
 	NavigationScene..|> Scene
 		
   class Game {
@@ -187,6 +191,12 @@ classDiagram
 	}
 	
 	class SelectScene {
+	}
+
+	class TableScene {
+	}
+
+	class TableControlScene {
 	}
 	
 	note for InputScene "하단 윈도우"
