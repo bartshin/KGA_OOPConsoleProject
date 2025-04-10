@@ -15,14 +15,15 @@ class NavigationScene: Scene {
   public override RenderContent GetRenderContent() {
     List<(string, RenderColor)> list = new();
     list.Add(("화살표와 엔터키로 메뉴를 선택하세요", RenderColor.Gray)); 
+    this.AddMargin(list, 1);
     int index = 0;
     while (index < this.Menu.Count) {
       list.Add((this.CreateMenuString(
               index, index + NavigationScene.MenusForRow),
             RenderColor.Yellow));
       index += NavigationScene.MenusForRow;
+      this.AddMargin(list, 1);
     }
-    this.AddMargin(list, 2);
     return (new RenderContent(list, RenderContent.AnimationType.None));
   }
 

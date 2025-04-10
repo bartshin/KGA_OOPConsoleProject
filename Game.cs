@@ -3,6 +3,7 @@ namespace ConsoleProject;
 class Game {
   private int totalDays = 0;
   private (double food, double water) TodayQuota = (0.0, 0.0);
+  private Character? todayFarming = null;
   public List<string> TodayDeadChracter = new();
   public bool IsEnded { get; private set; } = false;
   public SceneProgressor Scenes { get; private set; }
@@ -41,9 +42,7 @@ class Game {
             this.GoToNextDay(); 
          else 
            throw new ApplicationException("invalid modify totalDays");
-         
          break;
-
          default: throw new NotImplementedException();
        } 
     } 
@@ -78,6 +77,9 @@ class Game {
           status.Add(section, this.TodayDeadChracter);
           this.TodayDeadChracter = new(); 
           break;
+        case GameStatus.Section.TodayFarming:
+          status.Add(section, this.todayFarming?.Name ?? "없음");
+          break;
       } 
     }
   }
@@ -85,21 +87,22 @@ class Game {
   private Scene SelectScene(Scene scene, Window window) {
     if (window.Type != Window.WindowType.Main)
       throw (new NotImplementedException());
-    if (scene is TableScene tableScene) {
+    if (scene is TableScene tableScene ||
+       scene is SelectScene<string> selectScene ) 
       this.BottomWindow = null;
-      this.Scenes.ProgressToNextScene(scene); 
-    } 
+    this.Scenes.ProgressToNextScene(scene);
     return (scene);
   }
 
-  private Scene GoToNextScene(Window window) {
+  private Scene GoToNextScene(Window window, Scene? scene = null) {
     switch (window.Type) {
       case Window.WindowType.Main:
-        if (window.CurrentScene is ISelectScene selectScene) 
+        if (window.CurrentScene is ISelectScene selectScene &&
+            window.PopupScene == null) 
           this.GetSelection(selectScene);
-        var nextScene = this.SelectSceneFrom(
+        var nextScene = scene ?? this.SelectSceneFrom(
             this.Scenes.GetNextScenes(), window);
-        if (nextScene is MainScene || 
+        if ((nextScene is MainScene  && window.PopupScene == null )|| 
             SelectScene<object>.IsSelectScene(nextScene))
           this.SetBottomWindow(nextScene);
         else
@@ -126,6 +129,10 @@ class Game {
           this.data.Inven.Add((Item.ItemName)item);     
         }
         break;
+      case { Name: SceneFactory.SelectSN.SelectFarmerScene }:
+        var farmer = (string)selection.FirstOrDefault();
+        this.todayFarming = this.data.Characters.Find(c => c.Name == farmer); 
+        break;
       default: throw new NotImplementedException();
     }
   }
@@ -147,16 +154,12 @@ class Game {
   private void SetMainWindow() {
     var mainWindow = new Window(this.Scenes.CurrentScene, 
         Window.WindowType.Main);
-    mainWindow.GoToNextScene = (scene) => {
-      if (scene != null)
-        return (this.SelectScene(scene, mainWindow));
-      return (this.GoToNextScene(mainWindow));
-    };
+    mainWindow.GoToNextScene = (scene) => 
+      this.GoToNextScene(mainWindow, scene);
     mainWindow.GetNextScenes = this.Scenes.GetNextScenes;
     mainWindow.BackToPreviuosSceneFrom = (scene) => {
-      if (scene == mainWindow.PopupScene) {
+      if (scene == mainWindow.PopupScene)
         this.SetBottomWindow(mainWindow.CurrentScene);
-      }
       this.Scenes.BackToPreviousSceneFrom(scene);
     };
     this.Windows.Add(mainWindow);
@@ -168,6 +171,7 @@ class Game {
     var window = this.BottomWindow;
     if (window.OnReceieveMessage != null)
       this.MainWindow.OnSendMessage -= window.OnReceieveMessage!;
+    InputForwarder.Shared.FocusedWindow = this.MainWindow;
     this.Windows.Remove(window);
     Renderer.Shared.RemoveWindow(window);
   }
@@ -218,7 +222,7 @@ class Game {
 
   public Scene SelectSceneFrom(List<Scene> scenes, Window window) {
     if (window == this.MainWindow &&
-        window.CurrentScene.SceneName.Name == SceneFactory.PresentingSN.MainScene) {
+        window.CurrentScene.SceneName.Name== SceneFactory.PresentingSN.MainScene) {
       var mainIndex = scenes.FindIndex(scene => scene.SceneName.Name == SceneFactory.PresentingSN.MainScene );
       if (mainIndex != -1)
         return (scenes[mainIndex]);

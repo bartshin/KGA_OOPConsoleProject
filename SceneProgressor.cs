@@ -10,25 +10,34 @@ sealed class SceneProgressor {
   public Action<GameStatus> ModifyGameStatus;
 
   public List<Scene> GetNextScenes() {
+    if (this.currentNode.Children.Count == 0)
+      return ([this.currentNode.Parent.Value]);
     return this.currentNode.Children.ConvertAll<Scene>(node => node.Value);
   }
 
   public void BackToPreviousSceneFrom(Scene current) {
     if (this.currentNode.Parent == null)
-      throw new ApplicationException($"no parent scene: {current.SceneName.Name}");
+      throw new ApplicationException($"no parent scene: {current.SceneName.Name }");
     if (this.CurrentScene != current) 
-      throw new ApplicationException($"BackToPreviousSceneFrom different scene: {current.SceneName.Name}");
+      throw new ApplicationException($"BackToPreviousSceneFrom different scene: {current.SceneName.Name }");
     this.currentNode = this.currentNode.Parent;
   }
 
   public void ProgressToNextScene(Scene next) {
     var node = this.currentNode.GetChildBy(next);
     if (node == null) {
+      if (next == this.currentNode.Parent?.Value) {
+        this.currentNode = this.currentNode.Parent;
+        this.OnEnterScene();
+        return;
+      }
       throw (new ApplicationException($"${next.SceneName} is not child of current scene"));
     }
     this.currentNode = node;
-    if (next is MainScene) 
+    if (next is MainScene) {
+      sceneTree.ChangeRoot(node);
       this.ProgressToNextDay(); 
+    }
     this.OnEnterScene();
   }
 
@@ -115,24 +124,33 @@ sealed class SceneProgressor {
   }
 
   private List<Scene> GetMainSceneChildren() {
-    
+    List<Scene> scenes = new (); 
     TableScene inventory = (TableScene)SceneFactory.Shared.Build(
         SceneFactory.PresentingSN.Inventory
         );
-    inventory.GetGameStatus = this.GetGameStatus;
+    scenes.Add(inventory);
     TableScene characterStatus = (TableScene)SceneFactory.Shared.Build(
         SceneFactory.PresentingSN.CharacterStatus
         );
-    characterStatus.GetGameStatus = this.GetGameStatus;
+    scenes.Add(characterStatus);
     TableControlScene quata = (TableControlScene)SceneFactory.Shared.Build(SceneFactory.PresentingSN.Quata);
-    quata.GetGameStatus = this.GetGameStatus; 
     quata.ModifyGameStatus = this.ModifyGameStatus;
+    scenes.Add(quata);
+    var characters = this.GetCharacterStatus();
+    if (characters.Count > 1) {
+      var farmer = (SelectScene<string>)SceneFactory.Shared.Build(
+          SceneFactory.SelectSN.SelectFarmer,
+          new () {{"characters", characters }});
+      //farmer.ModifyGameStatus = this.ModifyGameStatus;
+      scenes.Add(farmer);
+    }
     var mainScene = SceneFactory.PresentingSN.Main;
     Dictionary<string, object> data = new();
     this.FillMainSceneTexts(data);
-    var main = (SceneFactory.Shared.Build(mainScene, data));
-    main.GetGameStatus = this.GetGameStatus;
-    return ([characterStatus, inventory, quata, main]);
+    scenes.Add(SceneFactory.Shared.Build(mainScene, data));
+    foreach (var scene in scenes) 
+      scene.GetGameStatus = this.GetGameStatus;
+    return (scenes);
   }
 
   private void FillMainSceneTexts(Dictionary<string, object> dict) {
@@ -142,6 +160,18 @@ sealed class SceneProgressor {
     if (status.TryGet<int>(GameStatus.Section.TotalDay, out int day))
       builder.Append(GameText.AddDayText(day + 1)); 
     dict.Add(MainScene.MainText, builder.ToString());
+  }
+
+  private List<(string, string)> GetCharacterStatus() {
+    GameStatus status = new([ GameStatus.Section.CharacterStatus ]);
+    this.GetGameStatus(status);
+    if (status.TryGet<List<(string, string)>>(
+        GameStatus.Section.CharacterStatus, 
+        out var characterStatus
+        )) {
+      return (characterStatus);
+    }
+    throw (new ApplicationException("can not get character status"));
   }
 }
 

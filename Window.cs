@@ -53,7 +53,7 @@ class Window: IInteractable {
   public Window(Scene initialScene, WindowType type) {
     this.CurrentScene = initialScene;
     this.Type = type;
-    this.AcceptType = IInteractable.InputType.None;
+    this.AcceptType = IInteractable.InputType.AnyKey;
     this.AcceptKeys = initialScene.AcceptKeys;
   }
 
@@ -91,21 +91,26 @@ class Window: IInteractable {
     => this.CurrentScene.GetRenderContent();
 
   private void UpdateAccept(Scene scene) {
-    if (scene is IInteractable interactable)  {
-      this.AcceptType = interactable.AcceptType;
-      this.AcceptKeys = interactable.AcceptKeys;
-    }
-    else {
-      this.AcceptType = IInteractable.InputType.None;
+    if (scene is INavigatable navigatable) 
+      this.AcceptKeys = navigatable.AcceptKeys;
+    else 
       this.AcceptKeys = scene.AcceptKeys;
-    }
+    this.AcceptType = this.AcceptKeys.Count == 0? IInteractable.InputType.AnyKey: IInteractable.InputType.SpecificKeys;
   }
 
   private void HandleCommand(WindowCommand command, object? obj) {
     switch (command) {
       case WindowCommand.NextScene:
-        Scene nextScene = this.GoToNextScene(null);
-        this.CurrentScene = nextScene;
+        if (obj is string nextSceneName) {
+          nextSceneName = nextSceneName.Split(':')[1];
+          var nextScene = this.GetNextScenes().Find(
+              scene => scene.SceneName.Name == nextSceneName)!;
+          this.CurrentScene = this.GoToNextScene(nextScene); 
+        }
+        else {
+          Scene nextScene = this.GoToNextScene(null);
+          this.CurrentScene = nextScene;
+        }
         break;
       case WindowCommand.SendMessage:
         if (this.OnSendMessage == null) {
@@ -170,4 +175,5 @@ class Window: IInteractable {
     }
   }
 }
+
 

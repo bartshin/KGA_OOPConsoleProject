@@ -18,7 +18,7 @@ sealed class Inventory: IEnumerable<Item> {
       consumableItem.Quantity += newItem.Quantity;
     }
     else 
-      this.Items.Add(name, item); 
+      this.Items[name] = item; 
   }
 
   public double GetTotalWater() {

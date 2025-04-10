@@ -19,16 +19,15 @@ class InputForwarder {
     set {
       ArgumentNullException.ThrowIfNull(value);
       this.focusedWindow = value;
-      this.OnSetWindow(value);
   }}
-  private HashSet<InputKey> waitingKeys = new();
-  public bool IsWaitingInput => this.FocusedWindow.AcceptType != IInteractable.InputType.None;
   public IInteractable.InputType AcceptType => this.FocusedWindow.AcceptType;
   
   public void GetInput() {
-    if (!this.IsWaitingInput)
-      return ;
-    var input = Console.ReadKey(false).Key;
+    if (Console.KeyAvailable) {
+      Thread.Sleep(200);
+      Console.ReadKey(true);
+    }
+    var input = Console.ReadKey(true).Key;
     if (this.FocusedWindow.AcceptType == IInteractable.InputType.AnyKey
         || this.FocusedWindow.AcceptKeys.Contains(input))
       this.FocusedWindow.ReceiveInput(input);
@@ -36,14 +35,6 @@ class InputForwarder {
 
   public InputForwarder(Window window) {
     this.focusedWindow = window;
-    this.OnSetWindow(window);
-  }
-
-  public void OnSetWindow(Window window) {
-    this.waitingKeys.Clear();
-    foreach (var key in window.AcceptKeys) {
-      this.waitingKeys.Add(key);
-    }
   }
 }
 

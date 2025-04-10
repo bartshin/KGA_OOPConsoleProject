@@ -12,7 +12,8 @@ class GameStatus {
     Items,
     TodayQuota,
     MaxQuota,
-    TodayDead
+    TodayDead,
+    TodayFarming
   }
 
   public void Add(Section section, object value) {

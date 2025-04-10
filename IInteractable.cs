@@ -6,16 +6,14 @@ public interface IInteractable {
   public IList<InputKey> AcceptKeys { get; }
 
   enum InputType {
-    None,
     AnyKey,
     SpecificKeys
   };
 }
 
-public interface INavigatable: IInteractable {
+public interface INavigatable {
   IList<string> Menu { get; }  
-  InputType IInteractable.AcceptType => InputType.SpecificKeys;
-  IList<InputKey> IInteractable.AcceptKeys => new InputKey[] {
+  IList<InputKey> AcceptKeys => new InputKey[] {
     InputKey.LeftArrow,
     InputKey.RightArrow,
     InputKey.UpArrow,

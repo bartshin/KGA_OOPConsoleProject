@@ -12,6 +12,7 @@ class MainScene : Scene, INavigatable {
     MainScene.MenuType.CharacterStatus,
     MainScene.MenuType.Inventory,
     MainScene.MenuType.Quata,
+    MainScene.MenuType.Farming,
     MainScene.MenuType.Next,
   };
 
@@ -50,7 +51,8 @@ class MainScene : Scene, INavigatable {
         GameStatus.Section.RemainingSoup,
         GameStatus.Section.RemainingWater,
         GameStatus.Section.TodayQuota,
-        GameStatus.Section.TodayDead
+        GameStatus.Section.TodayDead,
+        GameStatus.Section.TodayFarming,
     ]); 
     this.GetGameStatus(status);
     if (status.TryGet<double>(GameStatus.Section.RemainingSoup, out double soup)) {
@@ -74,18 +76,23 @@ class MainScene : Scene, INavigatable {
          texts.Add(string.Format($"오늘 {character}가 하늘나라로 갔습니다.")); 
       }
     }
+    if (status.TryGet<string>(GameStatus.Section.TodayFarming, out var farmingCharacter)) {
+      texts.Add(string.Format($"오늘의 탐험: {farmingCharacter}"));
+    }
     return (texts);
   }
 
   public override void OnRenderFinished() {
-    base.OnRenderFinished();
+    this.State = SceneState.WaitingInput;
   }
 
   public override (Window.WindowCommand, object?) ReceiveInput(InputKey input) {
-    throw new NotImplementedException();
+    this.State = SceneState.Rendering;
+    return (Window.WindowCommand.None, null);
   }
 
   public override (Window.WindowCommand, object?) ReceiveMessage(Window.WindowMessage message) {
+    this.State = SceneState.Rendering;
     if (message.Type == Window.WindowMessage.MessageType.Selection) {
       string menu = ((IList<string>)message.Value)[0];
       switch (menu) {
@@ -98,6 +105,8 @@ class MainScene : Scene, INavigatable {
               SceneFactory.Shared.GetFullName(SceneFactory.PresentingSN.Quata));
         case MainScene.MenuType.Next:
           return (Window.WindowCommand.NextScene, null);
+        case MainScene.MenuType.Farming:
+          return (Window.WindowCommand.NextScene, SceneFactory.Shared.GetFullName(SceneFactory.SelectSN.SelectFarmer));
       }
     }
     return base.ReceiveMessage(message);
@@ -107,6 +116,7 @@ class MainScene : Scene, INavigatable {
     public const string CharacterStatus = "캐릭터 상태";
     public const string Inventory = "인벤토리";
     public const string Quata = "할당량";
+    public const string Farming = "탐험";
     public const string Next = "다음날로";
   }
 }

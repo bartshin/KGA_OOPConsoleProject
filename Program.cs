@@ -10,8 +10,7 @@ class Program {
     Renderer.Shared.SetWindow(game.MainWindow);
     while (!game.IsEnded) {
       Renderer.Shared.PreceedRender();
-      if (InputForwarder.Shared.IsWaitingInput)
-        InputForwarder.Shared.GetInput();
+      InputForwarder.Shared.GetInput();
     }
     Console.WriteLine("Game Over!");
   }

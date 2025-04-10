@@ -47,7 +47,6 @@ sealed class SelectScene<T>: Scene, ISelectScene {
     }
     else 
       throw (new ArgumentException("fail to init selections"));
-
     if (param.ContainsKey("maximumSelect") && 
         param["maximumSelect"] is int maximumSelect
         ) {
@@ -66,10 +65,12 @@ sealed class SelectScene<T>: Scene, ISelectScene {
   }
 
   public override (Window.WindowCommand, object?) ReceiveInput(InputKey input) {
-    if (input == InputKey.Enter) {
-      if (this.MaximumSelect > 1 && this.Selected.Count > 0)
-        return (Window.WindowCommand.NextScene, this.NextSceneName);
-      return (Window.WindowCommand.None, null);
+    if (input == InputKey.Enter) 
+      return (this.HandleEnterKey());
+    else if (this.MaxSelection == 1) {
+      this.Selected.Add(input);
+//      this.HandleConfirm();
+      return (Window.WindowCommand.NextScene, null);
     }
     var inputValue = this.Selections[input];
     if (inputValue == null)
@@ -81,9 +82,27 @@ sealed class SelectScene<T>: Scene, ISelectScene {
     else if (this.Selected.Count < this.MaxSelection) {
       this.Selected.Add(input);
     }
-    if (this.MaximumSelect == 1)
-      return (Window.WindowCommand.SendMessage, new T[]{ inputValue });
     return (Window.WindowCommand.SendMessage, this.Selected);
+  }
+
+//  private void HandleConfirm() {
+//    if (this.ModifyGameStatus == null)
+//      return ;
+//    if (this.SceneName.Name == SceneFactory.SelectSN.SelectFarmerScene) {
+//      var character = this.Selections[this.Selected[0]]!;
+//      GameStatus status = new GameStatus([GameStatus.Section.TodayFarming]);
+//      status.Add(GameStatus.Section.TodayFarming, character);
+//      this.ModifyGameStatus(status);
+//    }
+//  }
+
+  private (Window.WindowCommand, object?) HandleEnterKey() {
+    if (this.MaximumSelect > 1 && this.Selected.Count > 0) {
+//      if (this.ModifyGameStatus != null)
+//        this.HandleConfirm();
+      return (Window.WindowCommand.NextScene, null);
+    }
+    return (Window.WindowCommand.None, null);
   }
 
   public override void OnRenderFinished() {

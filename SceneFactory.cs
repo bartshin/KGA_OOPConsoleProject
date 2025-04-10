@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace ConsoleProject;
 
 sealed class SceneFactory {
@@ -55,6 +57,8 @@ sealed class SceneFactory {
         return (this.CreateImageScene(sceneName, data));
       case SceneType.Main:
         return (this.CreateMainScene(sceneName, data));
+      case SceneType.Select:
+        return (this.CreateSelectScene(sceneName, data));
       default: 
         throw (new NotImplementedException());
     }
@@ -68,7 +72,7 @@ sealed class SceneFactory {
     return (new MainScene(name, data));
   }
 
-  private Scene CreateSelectScene(Scene.ISceneName scene) {
+  private Scene CreateSelectScene(Scene.ISceneName scene, Dictionary<string, object>? data = null) {
 
     switch (scene) {
       case { Name: SelectSN.SelectCharacterScene }:
@@ -99,6 +103,31 @@ sealed class SceneFactory {
                {"maximumSelect", 8},
                {"selections",itemSelection },
                }));
+      case { Name: SelectSN.SelectFarmerScene }:
+          var characters = (List<(string, string)>)data!["characters"];
+          StringBuilder builder = new("""
+              외부 상황이 아직 확인되지 않았다
+              나가는 건 위험할 수 있다
+              하지만 추가 보급품이 간절히 필요하다
+
+
+              """);
+          List<(InputKey, object)> selections = new();
+          for (int i = 0; i < characters.Count; ++i) {
+            var (name, descrition) = characters[i];
+            builder.AppendLine(string.Format($"{name}: {descrition}"));
+            var key = (InputKey)Enum.Parse(typeof(InputKey),
+                string.Format($"D{(i + 1)}")
+                );
+            selections.Add((key, name));
+          }
+          return (new SelectScene<string>(
+            scene,
+            new Dictionary<string, object> {
+              { "prompt", builder.ToString() },
+              { "maximumSelect", 1 },
+              { "selections", selections }
+            }));
       default: throw (new ArgumentException($"invalid name for SelectScene: {scene.Name}"));
     }
   }
@@ -207,6 +236,10 @@ sealed class SceneFactory {
     public static readonly SelectSN SelectCharacter = new (){
       Name = SelectCharacterScene
     }; 
+    public const string SelectFarmerScene = "Select Farmer Scene";
+    public static readonly SelectSN SelectFarmer = new() {
+      Name = SelectFarmerScene
+    };
   }
 
   public struct AssistanceSN: Scene.ISceneName {
@@ -223,15 +256,15 @@ sealed class SceneFactory {
     public static readonly PresentingSN Main = new() { Name = PresentingSN.MainScene };
     public const string CharacterStatusScene = "Character Status Scene";
     public static readonly PresentingSN CharacterStatus = new() {
-      Name = PresentingSN.CharacterStatusScene
+      Name = CharacterStatusScene
     };
     public const string InventoryScene = "Inventory Scene";
     public static readonly PresentingSN Inventory = new() {
-      Name = PresentingSN.InventoryScene
+      Name = InventoryScene
     };
     public const string QuataScene = "Quata Scene";
     public static readonly PresentingSN Quata = new() {
-      Name = PresentingSN.QuataScene
+      Name = QuataScene
     };
   }
 
