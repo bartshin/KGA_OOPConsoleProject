@@ -172,6 +172,7 @@ class Game {
           { "numberOfSurviver", this.NumberOfSurviver },
           });
     Renderer.Shared.OnRenderFinished += ((_, _) => {
+        Console.CursorVisible = true;
         Environment.Exit(0);
         });
     this.SetMainWindow(endingScene);
