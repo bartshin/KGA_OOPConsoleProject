@@ -9,7 +9,7 @@ class TableControlScene: TableScene {
 
   public TableControlScene(Scene.ISceneName name): base(name) { 
     this.Title = name switch {
-      { Name: SceneFactory.PresentingSN.QuataScene } => "할당량 조절",
+      { Value: SceneFactory.PresentingSN.QuataScene } => "할당량 조절",
       _ => "",
     };
   }
@@ -35,7 +35,7 @@ class TableControlScene: TableScene {
 
   protected override void GetStatus() {
     this.Items = new();
-    var scene  = this.SceneName.Name;
+    var scene  = this.SceneName.Value;
     List<GameStatus.Section> sections = new();
     switch(scene ) {
 
@@ -86,7 +86,7 @@ class TableControlScene: TableScene {
   
   private void HandleModify(bool isIncerese) {
     switch (this.SceneName) {
-      case { Name: SceneFactory.PresentingSN.QuataScene }:
+      case { Value: SceneFactory.PresentingSN.QuataScene }:
         double value = double.Parse(this.Items[this.currentIndex].Item2);
         var key = this.Items[this.currentIndex].Item1;
         if (!isIncerese && value < 0.5)
@@ -102,7 +102,7 @@ class TableControlScene: TableScene {
 
   private void HandleConfirm() {
     switch (this.SceneName) {
-      case { Name: SceneFactory.PresentingSN.QuataScene }:
+      case { Value: SceneFactory.PresentingSN.QuataScene }:
         GameStatus status = new ([GameStatus.Section.TodayQuota]);
         double food = double.Parse(this.Items.Find(
               e => e.Item1 == Item.ItemName.Soup.Value).Item2);

@@ -1,9 +1,12 @@
+using System.Text;
+
 namespace ConsoleProject;
 
 class Game {
   private int totalDays = 0;
   private (double food, double water) TodayQuota = (0.0, 0.0);
   private Character? todayFarming = null;
+  public string YesterDayFarmingResult;
   public List<string> TodayDeadChracter = new();
   public bool IsEnded { get; private set; } = false;
   public SceneProgressor Scenes { get; private set; }
@@ -80,6 +83,12 @@ class Game {
         case GameStatus.Section.TodayFarming:
           status.Add(section, this.todayFarming?.Name ?? "없음");
           break;
+        case GameStatus.Section.YesterDayFarming:
+          status.Add(section, this.YesterDayFarmingResult);
+          break;
+        case GameStatus.Section.IsAnyCharacterFarming:
+          status.Add(section, this.data.IsAnyCharacterFarming());
+          break;
       } 
     }
   }
@@ -137,7 +146,9 @@ class Game {
     }
   }
   private void GoToNextDay() {
-    this.totalDays += 1;
+    this.YesterDayFarmingResult = this.data.GetFarmingResult();
+    if (this.todayFarming != null)
+      this.data.GoFarming(this.todayFarming);
     bool isSurvived = this.data.GoToNextDay(this.TodayQuota);
     if (!isSurvived) {
       foreach (Character character in this.data.Characters.FindAll(c => !c.IsAlive)) {
@@ -148,7 +159,10 @@ class Game {
         this.IsEnded = true;
       }
     }
+    this.data.TakeRest();
+    this.totalDays += 1;
     this.TodayQuota = (0.0, 0.0);
+    this.todayFarming = null;
   }
 
   private void SetMainWindow() {
@@ -246,6 +260,7 @@ class Game {
   private class GameData {
     public List<Character> Characters { get; private set; }
     public Inventory Inven { get; private set; }
+    private Random random = new();
 
     public GameData() {
       this.Characters = new List<Character>();
@@ -259,16 +274,57 @@ class Game {
     public List<(string, string)> GetChracterStatus() {
       List<(string, string)> list = new();
       foreach (var character in this.Characters) {
+        if (!character.IsAlive)
+          continue;
+        if (character.IsFarming) {
+          list.Add((character.Name, Character.FarmingText));
+          continue;
+        }
         int count = 0;
         foreach (var status in character.CurrentStatus) {
-          list.Add((character.Name,
-                GameText.GetCharacterComment(status))); 
+          list.Add((character.Name, GameText.GetCharacterComment(status))); 
           ++count;
         }
         if (count == 0) 
           list.Add((character.Name, GameText.GetCharacterComment(null)));
       }
       return (list);
+    }
+
+    public void GoFarming(Character character) {
+      character.IsFarming = true;
+      character.DoWork();
+    }
+
+    public string GetFarmingResult() {
+      var farmer = this.Characters.Find(c => c.IsFarming);
+      if (farmer == null)
+        return (null);
+      farmer.IsFarming = false;
+      bool food = this.random.Next(0, 100) > 70;
+      bool water = this.random.Next(0, 100) > 70;
+      if (food)
+        this.Inven.Add(Item.ItemName.Soup);
+      if (water)
+        this.Inven.Add(Item.ItemName.Water);
+      StringBuilder builder = new();
+      if (food && water)
+        builder.AppendLine(string.Format($"{farmer.Name}은 물과 수프를 모두 발견했다!"));
+      else if (food)
+        builder.AppendLine(string.Format($"{farmer.Name}은 수프를 발견했다!"));
+      else if (water)
+        builder.AppendLine(string.Format($"{farmer.Name}은 물을 발견했다!"));
+      else
+        builder.AppendLine(string.Format($"{farmer.Name}은 아무 소득도 없이 돌아왔다"));
+      return (builder.ToString());
+    }
+    
+    public void TakeRest() {
+      foreach (var character in this.Characters) {
+         if (!character.IsFarming && character.IsAlive) {
+            character.TakeRest();
+         }
+      }
     }
 
     public List<(string, string)> GetItems() {
@@ -300,6 +356,9 @@ class Game {
         if (!this.Characters[i].IsAlive) 
           this.Characters.RemoveAt(i);
       }
+    }
+    public bool IsAnyCharacterFarming() {
+      return (this.Characters.FindIndex(c => c.IsFarming) != -1);
     }
   }
 }

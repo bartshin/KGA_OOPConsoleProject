@@ -7,11 +7,13 @@ sealed class Character {
 
   private Character.Playable _character;
   public string Name { get; init; }
+  public bool IsFarming;
   public string Description { get; init; }
   public double Health { get; private set; }
   public double Thirst { get; private set; }
   public double Starving { get; private set; }
   public bool IsAlive { get; private set; }
+  public const string FarmingText = "위험한 밖을 탐험중이다";
 
   public Dictionary<Stat, double> Stats { get; private set; }
   public IEnumerable<Status> CurrentStatus => this.currentStatus.AsEnumerable<Status>();
@@ -27,10 +29,45 @@ sealed class Character {
     this.currentStatus = new();
     this.InitStats(stats);
     this.IsAlive = true;
+    this.Health = 100;
+    this.IsFarming = false;
   }
 
   public double GetConditionLevel() {
     throw (new NotImplementedException());
+  }
+
+  public void DoWork() {
+    this.Health -= 10;
+    this.UpdateHealthStatus();
+  }
+
+  public void TakeRest() {
+    this.Health += 10;
+    this.UpdateHealthStatus();
+  }
+
+  private void UpdateHealthStatus() {
+    if (this.Health < 30) {
+      this.SetStatus(Status.Sick);
+      this.RemoveStatus(Status.Fatigued);
+      this.RemoveStatus(Status.Tired);
+    }
+    else if (this.Health < 50) {
+      this.SetStatus(Status.Fatigued);
+      this.RemoveStatus(Status.Sick);
+      this.RemoveStatus(Status.Tired);
+    }
+    else if (this.Health < 70) {
+      this.SetStatus(Status.Tired);
+      this.RemoveStatus(Status.Fatigued);
+      this.RemoveStatus(Status.Sick);
+    }
+    else {
+      this.RemoveStatus(Status.Tired);
+      this.RemoveStatus(Status.Fatigued);
+      this.RemoveStatus(Status.Sick);
+    }
   }
 
   private void InitStats(IEnumerable<(Stat, double)> stats) {

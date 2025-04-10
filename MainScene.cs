@@ -7,14 +7,16 @@ class MainScene : Scene, INavigatable {
   public const string MainText = "Main text";
 
   public Dictionary<string, object> data;
+  public IList<string> Menu => this.menu;
 
-  public IList<string> Menu => new List<string>() {
-    MainScene.MenuType.CharacterStatus,
-    MainScene.MenuType.Inventory,
-    MainScene.MenuType.Quata,
-    MainScene.MenuType.Farming,
-    MainScene.MenuType.Next,
-  };
+  private List<string> menu =
+    new List<string>() {
+      MainScene.MenuType.CharacterStatus,
+      MainScene.MenuType.Inventory,
+      MainScene.MenuType.Quata,
+      MainScene.MenuType.Next
+    };
+
 
   public MainScene(Scene.ISceneName name,
       Dictionary<string, object> data)
@@ -23,7 +25,18 @@ class MainScene : Scene, INavigatable {
       this.NextSceneName = null;
     }
 
+  public void UpdateMenu() {
+
+    GameStatus status = new([GameStatus.Section.IsAnyCharacterFarming]);
+    this.GetGameStatus?.Invoke(status);
+    if (status.TryGet<bool>(GameStatus.Section.IsAnyCharacterFarming, out bool isFarming) && !isFarming) {
+      if (!this.menu.Contains(MainScene.MenuType.Farming))
+        this.menu.Add(MainScene.MenuType.Farming);
+    }
+  }
+
   public override RenderContent GetRenderContent() {
+    this.UpdateMenu();
      
     List<(string, RenderColor)> lists = new();
     this.AddMargin(lists);
@@ -53,6 +66,7 @@ class MainScene : Scene, INavigatable {
         GameStatus.Section.TodayQuota,
         GameStatus.Section.TodayDead,
         GameStatus.Section.TodayFarming,
+        GameStatus.Section.YesterDayFarming,
     ]); 
     this.GetGameStatus(status);
     if (status.TryGet<double>(GameStatus.Section.RemainingSoup, out double soup)) {
@@ -76,6 +90,11 @@ class MainScene : Scene, INavigatable {
          texts.Add(string.Format($"오늘 {character}가 하늘나라로 갔습니다.")); 
       }
     }
+    if (status.TryGet<string>(GameStatus.Section.YesterDayFarming, out var farmingResult)) {
+      texts.Add((string.Format($"어제의 탐험 결과: {farmingResult}")));
+    }
+    else
+      texts.Add((string.Format($"어제의 탐험 결과가 없습니다")));
     if (status.TryGet<string>(GameStatus.Section.TodayFarming, out var farmingCharacter)) {
       texts.Add(string.Format($"오늘의 탐험: {farmingCharacter}"));
     }

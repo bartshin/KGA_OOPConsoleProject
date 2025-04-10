@@ -136,7 +136,8 @@ sealed class SceneProgressor {
     TableControlScene quata = (TableControlScene)SceneFactory.Shared.Build(SceneFactory.PresentingSN.Quata);
     quata.ModifyGameStatus = this.ModifyGameStatus;
     scenes.Add(quata);
-    var characters = this.GetCharacterStatus();
+    var characters = this.GetCharacterStatus().FindAll(
+          status => status.Item2 != Character.FarmingText);
     if (characters.Count > 1) {
       var farmer = (SelectScene<string>)SceneFactory.Shared.Build(
           SceneFactory.SelectSN.SelectFarmer,
