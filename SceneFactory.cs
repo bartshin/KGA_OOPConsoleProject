@@ -194,6 +194,19 @@ sealed class SceneFactory {
               CharacterFactory.CharacterDescription.Get(character) + "\n계속하려면 아무키나 누르세요"}
               })
             );
+      case { Name: ImageSN.EndingScene }:
+        bool isSuccess = (bool)data["isSuccess"];
+        string endingImage = isSuccess ? Assets.WinLogo: Assets.GameOverLogo;
+        int numberOfSurvier = (int)data["numberOfSurviver"];
+        string endingAboveText = isSuccess ? "드디어 이 방공호에도 구급대원들이 도착했습니다": "저런 더 이상 버티지 못했네요";
+        string endingBelowText = isSuccess ? string.Format($"축하합니다 Ted 가족은 총 {numberOfSurvier}명이 살아남았습니다"):
+          "핵폭발로 인해 Ted 가족은 전부 하늘나라로 가게 되었습니다";
+        return (new ImageScene(SceneFactory.ImageSN.Title,
+                new Dictionary<string, string> {
+                  {"image", endingImage },
+                  { "textAbove", endingAboveText },
+                  { "textBelow", endingBelowText }
+                  }));
       default:
         throw (new ArgumentException($"invalid ImageSN: {imageScene}"));
     }
@@ -215,8 +228,6 @@ sealed class SceneFactory {
     return (new TableScene(scene));
   }
 
-
-
   public struct ImageSN: Scene.ISceneName {
     public string Name { get; set; }
 
@@ -224,6 +235,9 @@ sealed class SceneFactory {
     public static readonly ImageSN Title = new () { Name = ImageSN.TitleScene};
     public const string CharacterIntroScene = "Character Intro Scene";
     public static readonly ImageSN CharacterIntro = new () { Name = ImageSN.CharacterIntroScene};
+    public const string EndingScene = "EndingScene";
+    public static readonly ImageSN Ending = new () { Name = ImageSN.EndingScene};
+
   }
 
   public struct SelectSN: Scene.ISceneName {

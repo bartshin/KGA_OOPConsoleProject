@@ -9,6 +9,7 @@ class Game {
   public string YesterDayFarmingResult;
   public List<string> TodayDeadChracter = new();
   public bool IsEnded { get; private set; } = false;
+  public bool IsSuccess { get; private set; } = false;
   public SceneProgressor Scenes { get; private set; }
   public List<Window> Windows { get; } = new List<Window>();
   public Window MainWindow => this.Windows.Find(w => w.Type == Window.WindowType.Main)!;
@@ -23,12 +24,13 @@ class Game {
   }
   readonly public GameConfig Config = new GameConfig();
   private GameData data = new GameData();
+  public int NumberOfSurviver => this.data.Characters.FindAll(c => c.IsAlive).Count;
 
   public Game(SceneProgressor scenes) {
     this.Scenes = scenes;
     this.Scenes.GetGameStatus = this.ServeGameStatus;
     this.Scenes.ModifyGameStatus = this.HandleGameModification;
-    this.SetMainWindow();
+    this.SetMainWindow(this.Scenes.CurrentScene);
   }
 
   public void HandleGameModification(GameStatus status) {
@@ -147,7 +149,39 @@ class Game {
       default: throw new NotImplementedException();
     }
   }
+
+  private bool CheckGameEnded() {
+    if (this.IsEnded)
+      return (true);
+    if (this.totalDays >= Config.NumberOfTotalDays) {
+      this.IsEnded = true;
+      this.IsSuccess = true;
+      return (true);
+    }
+    return (false);
+  }
+
+  private void RenderEnding() {
+    this.BottomWindow = null;
+    foreach (var window in this.Windows)
+      Renderer.Shared.RemoveWindow(window);
+    ImageScene endingScene = (ImageScene) SceneFactory.Shared.Build(
+        SceneFactory.ImageSN.Ending,
+          new() {
+          { "isSuccess", this.IsSuccess },
+          { "numberOfSurviver", this.NumberOfSurviver },
+          });
+    Renderer.Shared.OnRenderFinished += ((_, _) => {
+        Environment.Exit(0);
+        });
+    this.SetMainWindow(endingScene);
+  }
+
   private void GoToNextDay() {
+    if (this.CheckGameEnded()) {
+      this.RenderEnding();
+      return;
+    }
     this.YesterDayFarmingResult = this.data.GetFarmingResult();
     if (this.todayFarming != null)
       this.data.GoFarming(this.todayFarming);
@@ -167,9 +201,9 @@ class Game {
     this.todayFarming = null;
   }
 
-  private void SetMainWindow() {
-    var mainWindow = new Window(this.Scenes.CurrentScene, 
-        Window.WindowType.Main);
+  private void SetMainWindow(Scene scene) {
+    var mainWindow = new Window(
+        scene, Window.WindowType.Main);
     mainWindow.GoToNextScene = (scene) => 
       this.GoToNextScene(mainWindow, scene);
     mainWindow.GetNextScenes = this.Scenes.GetNextScenes;
@@ -179,6 +213,7 @@ class Game {
       this.Scenes.BackToPreviousSceneFrom(scene);
     };
     this.Windows.Add(mainWindow);
+    Renderer.Shared.SetWindow(mainWindow);
   }
 
   private void RemoveBottomWindow() {
@@ -248,7 +283,7 @@ class Game {
   }
 
   readonly public struct GameConfig {
-    readonly int numberOfTotalDays = 30;
+    public readonly int NumberOfTotalDays = 20;
 
     public GameConfig() {}
   }

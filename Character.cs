@@ -19,6 +19,7 @@ sealed class Character {
   public IEnumerable<Status> CurrentStatus => this.currentStatus.AsEnumerable<Status>();
   private static Stat[] allStats = (Stat[])Enum.GetValues(typeof(Stat));
   private HashSet<Status> currentStatus;
+  private Random random = new();
 
   public Character(Character.Playable character, string name, string description, IEnumerable<(Stat statType, double value)> stats) {
     ArgumentNullException.ThrowIfNull(stats);
@@ -29,7 +30,7 @@ sealed class Character {
     this.currentStatus = new();
     this.InitStats(stats);
     this.IsAlive = true;
-    this.Health = 100;
+    this.Health = 80;
     this.IsFarming = false;
   }
 
@@ -38,30 +39,33 @@ sealed class Character {
   }
 
   public void DoWork() {
-    this.Health -= 10;
+    double sicknessChance = this.Stats[Stat.DiseaseIncidence] * 10;
+    if (random.Next(0, 100) < (int)sicknessChance) {
+      this.SetStatus(Status.Sick);
+    }
+    this.Health -= 50.0;
     this.UpdateHealthStatus();
+    if (this.Health < 0)
+      this.IsAlive = false;
   }
 
   public void TakeRest() {
-    this.Health += 10;
+    this.Health += 10.0;
     this.UpdateHealthStatus();
   }
 
   private void UpdateHealthStatus() {
     if (this.Health < 30) {
-      this.SetStatus(Status.Sick);
       this.RemoveStatus(Status.Fatigued);
       this.RemoveStatus(Status.Tired);
     }
     else if (this.Health < 50) {
       this.SetStatus(Status.Fatigued);
-      this.RemoveStatus(Status.Sick);
       this.RemoveStatus(Status.Tired);
     }
     else if (this.Health < 70) {
       this.SetStatus(Status.Tired);
       this.RemoveStatus(Status.Fatigued);
-      this.RemoveStatus(Status.Sick);
     }
     else {
       this.RemoveStatus(Status.Tired);
